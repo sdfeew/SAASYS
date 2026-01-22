@@ -1,9 +1,194 @@
-import React, { useState } from 'react';
-import Icon from '../../../components/AppIcon';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import commentService from '../../../services/commentService';
+import { Send, Heart, Reply, Trash2, User } from 'lucide-react';
 import Button from '../../../components/ui/Button';
-import Image from '../../../components/AppImage';
 
-const CommentsTab = ({ comments, onAddComment, onReply, onDelete }) => {
+const CommentsTab = ({ tenantId, recordId }) => {
+  const { user } = useAuth();
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+
+  useEffect(() => {
+    fetchComments();
+  }, [recordId]);
+
+  const fetchComments = async () => {
+    try {
+      setLoading(true);
+      const { data, error: err } = await commentService.listByRecord(recordId);
+      if (err) throw err;
+      setComments(data || []);
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Parse mentions from text (e.g., @username)
+  const parseMentions = (text) => {
+    const mentionRegex = /@(\w+)/g;
+    const mentions = [];
+    let match;
+    while ((match = mentionRegex.exec(text)) !== null) {
+      mentions.push(match[1]);
+    }
+    return mentions;
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      setError(null);
+      const mentions = parseMentions(newComment);
+      
+      const { error: err } = await commentService.create(
+        tenantId,
+        recordId,
+        newComment,
+        mentions
+      );
+      
+      if (err) throw err;
+      
+      setNewComment('');
+      await fetchComments();
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm('Delete this comment?')) return;
+
+    try {
+      setError(null);
+      const { error: err } = await commentService.delete(commentId);
+      if (err) throw err;
+      await fetchComments();
+    } catch (err) {
+      console.error('Error deleting comment:', err);
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+          {error}
+        </div>
+      )}
+
+      {/* Comments List */}
+      <div className="space-y-4">
+        {comments.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg">
+            <p className="text-gray-500">No comments yet. Be the first to comment!</p>
+          </div>
+        ) : (
+          comments.map((comment) => (
+            <div key={comment.id} className="bg-white rounded-lg border border-gray-200 p-4">
+              {/* Comment Header */}
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <User size={20} className="text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{comment.user_id}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(comment.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                {user?.id === comment.user_id && (
+                  <button
+                    onClick={() => handleDeleteComment(comment.id)}
+                    className="text-red-600 hover:text-red-800"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
+              </div>
+
+              {/* Comment Content */}
+              <p className="text-gray-700 mb-3">{comment.content}</p>
+
+              {/* Comment Actions */}
+              <div className="flex gap-4">
+                <button className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors">
+                  <Heart size={16} />
+                  <span className="text-sm">{comment.likes_count || 0}</span>
+                </button>
+                <button
+                  onClick={() => setReplyingTo(comment.id)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+                >
+                  <Reply size={16} />
+                  <span className="text-sm">Reply</span>
+                </button>
+              </div>
+
+              {/* Replies */}
+              {comment.replies && comment.replies.length > 0 && (
+                <div className="mt-4 ml-8 space-y-3 border-l-2 border-gray-200 pl-4">
+                  {comment.replies.map((reply) => (
+                    <div key={reply.id} className="bg-gray-50 rounded p-3">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                          <User size={16} className="text-green-600" />
+                        </div>
+                        <p className="font-semibold text-sm text-gray-900">{reply.user_id}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(reply.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <p className="text-sm text-gray-700">{reply.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Comment Input */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Add a comment
+        </label>
+        <textarea
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Write a comment... (Use @username to mention someone)"
+          rows="4"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+        />
+        <div className="flex justify-end mt-3">
+          <Button
+            onClick={handleAddComment}
+            disabled={!newComment.trim() || loading}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+          >
+            <Send size={18} />
+            Post Comment
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CommentsTab;
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');

@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
-import AdminSidebar from '../../components/ui/AdminSidebar';
-import ModuleBreadcrumbs from '../../components/ui/ModuleBreadcrumbs';
-import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
-import NotificationBadge from '../../components/ui/NotificationBadge';
-import Icon from '../../components/AppIcon';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import moduleService from '../../services/moduleService';
+import fieldService from '../../services/fieldService';
+import { Plus, Edit2, Trash2, Check, X, Database } from 'lucide-react';
 import Button from '../../components/ui/Button';
-import ModuleTreePanel from './components/ModuleTreePanel';
-import FieldConfigurationForm from './components/FieldConfigurationForm';
-import FieldListManager from './components/FieldListManager';
-import PreviewPanel from './components/PreviewPanel';
-import ModuleConfigurationModal from './components/ModuleConfigurationModal';
-import DeploymentConfirmationModal from './components/DeploymentConfirmationModal';
+import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
+
+const DATA_TYPES = [
+  { value: 'TEXT', label: 'Text' },
+  { value: 'NUMBER', label: 'Number' },
+  { value: 'CURRENCY', label: 'Currency' },
+  { value: 'DATE', label: 'Date' },
+  { value: 'DATETIME', label: 'DateTime' },
+  { value: 'BOOLEAN', label: 'Yes/No' },
+  { value: 'EMAIL', label: 'Email' },
+  { value: 'PHONE', label: 'Phone' },
+  { value: 'URL', label: 'URL' },
+  { value: 'REFERENCE', label: 'Reference' },
+  { value: 'ATTACHMENT', label: 'Attachment' },
+  { value: 'JSONB', label: 'JSON' }
+];
 
 const SchemaBuilderInterface = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
