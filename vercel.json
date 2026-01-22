@@ -10,9 +10,9 @@
     "VITE_API_URL": "@vite_api_url",
     "VITE_API_VERSION": "@vite_api_version"
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/[^.]+$",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
