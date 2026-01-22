@@ -125,18 +125,7 @@ ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 -- RLS Policies for user_profiles
 CREATE POLICY "Users can view all profiles" ON public.user_profiles FOR SELECT USING (true);
 CREATE POLICY "Users can update own profile" ON public.user_profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Admins can update any profile" ON public.user_profiles FOR UPDATE USING (
-  EXISTS (
-    SELECT 1 FROM public.user_profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  )
-);
-CREATE POLICY "Admins can delete profiles" ON public.user_profiles FOR DELETE USING (
-  EXISTS (
-    SELECT 1 FROM public.user_profiles
-    WHERE id = auth.uid() AND role = 'admin'
-  )
-);
+CREATE POLICY "Users can insert profiles" ON public.user_profiles FOR INSERT WITH CHECK (true);
 
 -- RLS Policies for dashboards
 CREATE POLICY "Users can view all dashboards" ON public.dashboards FOR SELECT USING (true);
