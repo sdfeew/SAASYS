@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import moduleService from '../../services/moduleService';
-import fieldService from '../../services/fieldService';
+import { moduleService } from '../../services/moduleService';
+import { fieldService } from '../../services/fieldService';
 import { Plus, Edit2, Trash2, Check, X, Database } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';

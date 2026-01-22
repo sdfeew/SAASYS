@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import recordService from '../../services/recordService';
+import { recordService } from '../../services/recordService';
 import { Plus, Edit2, Trash2, Eye, Filter, Download, Upload } from 'lucide-react';
 import Button from '../../components/ui/Button';
 

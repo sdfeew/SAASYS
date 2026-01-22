@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import tenantService from '../../services/tenantService';
+import { tenantService } from '../../services/tenantService';
+import moduleService from '../../services/moduleService';
+import fieldService from '../../services/fieldService';
 import { Plus, Edit2, Trash2, Check, X, Building2, Phone, Globe } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -28,8 +30,7 @@ const TenantAdminPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const { data, error: err } = await tenantService.list();
-      if (err) throw err;
+      const data = await tenantService.getAll();
       setTenants(data || []);
     } catch (err) {
       console.error('Error fetching tenants:', err);
@@ -65,11 +66,9 @@ const TenantAdminPage = () => {
     try {
       setError(null);
       if (editingId) {
-        const { error: err } = await tenantService.update(editingId, formData);
-        if (err) throw err;
+        await tenantService.update(editingId, formData);
       } else {
-        const { error: err } = await tenantService.create(formData);
-        if (err) throw err;
+        await tenantService.create(formData);
       }
       
       await fetchTenants();
@@ -87,8 +86,7 @@ const TenantAdminPage = () => {
 
     try {
       setError(null);
-      const { error: err } = await tenantService.delete(id);
-      if (err) throw err;
+      await tenantService.delete(id);
       await fetchTenants();
     } catch (err) {
       console.error('Error deleting tenant:', err);
