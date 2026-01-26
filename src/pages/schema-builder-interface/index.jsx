@@ -6,6 +6,7 @@ import { Plus, Edit2, Trash2, Check, X, Database } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
+import AdminSidebar from '../../components/ui/AdminSidebar';
 
 const DATA_TYPES = [
   { value: 'TEXT', label: 'Text' },
