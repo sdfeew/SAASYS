@@ -46,6 +46,7 @@ const TenantAdminPage = () => {
   const validateForm = () => {
     const errors = {};
     if (!formData.name?.trim()) errors.name = 'Name is required';
+    if (!formData.code?.trim()) errors.code = 'Tenant code is required';
     if (formData.phone && !/^[\d\s\-\+\(\)]{7,20}$/.test(formData.phone.replace(/\s/g, ''))) {
       errors.phone = 'Invalid phone format';
     }
@@ -96,6 +97,7 @@ const TenantAdminPage = () => {
   const handleEdit = (tenant) => {
     setFormData({
       name: tenant.name,
+      code: tenant.code,
       description: tenant.description,
       phone: tenant.phone,
       website: tenant.website,
@@ -106,10 +108,20 @@ const TenantAdminPage = () => {
     setShowForm(true);
   };
 
+  // Generate code from name
+  const generateCode = (name) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 50);
+  };
+
   // Reset form
   const resetForm = () => {
     setFormData({
       name: '',
+      code: '',
       description: '',
       phone: '',
       website: '',
@@ -171,13 +183,36 @@ const TenantAdminPage = () => {
                   <Input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setFormData({
+                        ...formData,
+                        name,
+                        code: generateCode(name)
+                      });
+                    }}
                     placeholder="Enter tenant name"
                     className={validationErrors.name ? 'border-red-500' : ''}
                   />
                   {validationErrors.name && (
                     <p className="text-red-600 text-sm mt-1">{validationErrors.name}</p>
                   )}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Tenant Code *
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    placeholder="Auto-generated from name"
+                    className={validationErrors.code ? 'border-red-500' : ''}
+                  />
+                  {validationErrors.code && (
+                    <p className="text-red-600 text-sm mt-1">{validationErrors.code}</p>
+                  )}
+                  <p className="text-gray-500 text-xs mt-1">Unique identifier for the tenant</p>
                 </div>
 
                 <div>
