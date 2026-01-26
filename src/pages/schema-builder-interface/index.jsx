@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { moduleService } from '../../services/moduleService';
 import { fieldService } from '../../services/fieldService';
-import { Plus, Edit2, Trash2, Check, X, Database } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, Database, Bell } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import AdminSidebar from '../../components/ui/AdminSidebar';
+import NotificationBadge from '../../components/ui/NotificationBadge';
+import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
 
 const DATA_TYPES = [
   { value: 'TEXT', label: 'Text' },
@@ -240,7 +242,7 @@ const SchemaBuilderInterface = () => {
 
             <div className="flex items-center gap-3">
               <button className="relative p-2 hover:bg-muted rounded-md transition-smooth">
-                <Icon name="Bell" size={20} className="text-foreground" />
+                <Bell size={20} className="text-foreground" />
                 <NotificationBadge count={3} className="absolute -top-1 -right-1" />
               </button>
               <UserProfileDropdown />
