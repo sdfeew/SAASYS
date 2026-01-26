@@ -23,7 +23,6 @@ const testUsers = [
     password: 'Admin@123456',
     profile: {
       full_name: 'Admin User',
-      phone_number: '+1-555-2001',
       role_code: 'admin'
     }
   },
@@ -32,7 +31,6 @@ const testUsers = [
     password: 'Manager@123456',
     profile: {
       full_name: 'Manager User',
-      phone_number: '+1-555-2002',
       role_code: 'manager'
     }
   },
@@ -41,7 +39,6 @@ const testUsers = [
     password: 'User@123456',
     profile: {
       full_name: 'Staff User 1',
-      phone_number: '+1-555-2003',
       role_code: 'user'
     }
   },
@@ -50,7 +47,6 @@ const testUsers = [
     password: 'User@123456',
     profile: {
       full_name: 'Staff User 2',
-      phone_number: '+1-555-2004',
       role_code: 'user'
     }
   },
@@ -59,7 +55,6 @@ const testUsers = [
     password: 'Viewer@123456',
     profile: {
       full_name: 'Viewer User',
-      phone_number: '+1-555-2005',
       role_code: 'viewer'
     }
   }
@@ -69,6 +64,20 @@ async function createTestUsers() {
   console.log('🚀 Starting test user creation...\n');
 
   try {
+    // Get first tenant ID
+    const { data: tenants, error: tenantError } = await supabase
+      .from('tenants')
+      .select('id')
+      .limit(1);
+
+    if (tenantError || !tenants || tenants.length === 0) {
+      console.error('❌ Error fetching tenant:', tenantError?.message || 'No tenants found');
+      process.exit(1);
+    }
+
+    const tenantId = tenants[0].id;
+    console.log(`📁 Using tenant: ${tenantId}\n`);
+
     for (const user of testUsers) {
       try {
         console.log(`Creating user: ${user.email}`);
@@ -89,43 +98,17 @@ async function createTestUsers() {
           .from('user_profiles')
           .insert({
             id: authUser.user.id,
+            tenant_id: tenantId,
             full_name: user.profile.full_name,
-            phone_number: user.profile.phone_number,
+            email: user.email,
             role_code: user.profile.role_code,
             avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.profile.full_name.replace(/\s+/g, '')}`,
-            status: 'active'
+            permissions: [],
+            notification_preferences: {}
           });
 
         if (profileError) {
           console.error(`  ❌ Error creating profile: ${profileError.message}`);
-          continue;
-        }
-
-        // Assign to first tenant
-        const { data: tenants, error: tenantError } = await supabase
-          .from('tenants')
-          .select('id')
-          .limit(1);
-
-        if (tenantError || !tenants || tenants.length === 0) {
-          console.error(`  ❌ Error fetching tenant: ${tenantError?.message || 'No tenants found'}`);
-          continue;
-        }
-
-        const tenantId = tenants[0].id;
-
-        const { error: assignError } = await supabase
-          .from('tenant_users')
-          .insert({
-            tenant_id: tenantId,
-            user_id: authUser.user.id,
-            role: user.profile.role_code === 'admin' ? 'admin' : 
-                  user.profile.role_code === 'manager' ? 'manager' :
-                  user.profile.role_code === 'user' ? 'user' : 'viewer'
-          });
-
-        if (assignError && !assignError.message.includes('duplicate')) {
-          console.error(`  ❌ Error assigning to tenant: ${assignError.message}`);
           continue;
         }
 

@@ -10,33 +10,31 @@
 -- Note: These UUIDs should be replaced with actual Supabase auth IDs after user creation
 -- Run this script after creating users in Supabase Auth console or via SQL
 
--- Test User Profiles (Update UUIDs based on actual auth user IDs)
-INSERT INTO user_profiles (id, full_name, avatar_url, phone_number, role_code, status) VALUES
--- Admin User
-('550e8400-e29b-41d4-a716-446655440000', 'Admin User', 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin', '+1-555-2001', 'admin', 'active'),
--- Manager Users
-('550e8400-e29b-41d4-a716-446655440001', 'Manager User', 'https://api.dicebear.com/7.x/avataaars/svg?seed=manager', '+1-555-2002', 'manager', 'active'),
--- Standard Users
-('550e8400-e29b-41d4-a716-446655440002', 'Staff User 1', 'https://api.dicebear.com/7.x/avataaars/svg?seed=staff1', '+1-555-2003', 'user', 'active'),
-('550e8400-e29b-41d4-a716-446655440003', 'Staff User 2', 'https://api.dicebear.com/7.x/avataaars/svg?seed=staff2', '+1-555-2004', 'user', 'active'),
--- Viewer User
-('550e8400-e29b-41d4-a716-446655440004', 'Viewer User', 'https://api.dicebear.com/7.x/avataaars/svg?seed=viewer', '+1-555-2005', 'viewer', 'active')
-ON CONFLICT (id) DO NOTHING;
+-- First, get the first tenant ID (or create one if needed)
+DO $$ 
+DECLARE
+    v_tenant_id UUID;
+BEGIN
+    -- Get first tenant ID
+    SELECT id INTO v_tenant_id FROM tenants LIMIT 1;
+    
+    IF v_tenant_id IS NULL THEN
+        INSERT INTO tenants (name, code, status, subscription_plan)
+        VALUES ('Test Tenant', 'test-tenant', 'active', 'professional')
+        RETURNING id INTO v_tenant_id;
+    END IF;
 
--- Assign test users to first tenant
--- Admin gets full access
-INSERT INTO tenant_users (tenant_id, user_id, role) VALUES
-((SELECT id FROM tenants LIMIT 1), '550e8400-e29b-41d4-a716-446655440000', 'admin')
-ON CONFLICT (tenant_id, user_id) DO NOTHING;
+    -- Test User Profiles (Update UUIDs based on actual auth user IDs)
+    INSERT INTO user_profiles (id, tenant_id, full_name, email, avatar_url, role_code, status) VALUES
+    -- Admin User
+    ('550e8400-e29b-41d4-a716-446655440000', v_tenant_id, 'Admin User', 'admin@test.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin', 'admin', 'active'),
+    -- Manager Users
+    ('550e8400-e29b-41d4-a716-446655440001', v_tenant_id, 'Manager User', 'manager@test.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=manager', 'manager', 'active'),
+    -- Standard Users
+    ('550e8400-e29b-41d4-a716-446655440002', v_tenant_id, 'Staff User 1', 'user1@test.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=staff1', 'user', 'active'),
+    ('550e8400-e29b-41d4-a716-446655440003', v_tenant_id, 'Staff User 2', 'user2@test.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=staff2', 'user', 'active'),
+    -- Viewer User
+    ('550e8400-e29b-41d4-a716-446655440004', v_tenant_id, 'Viewer User', 'viewer@test.com', 'https://api.dicebear.com/7.x/avataaars/svg?seed=viewer', 'viewer', 'active')
+    ON CONFLICT (id) DO NOTHING;
 
--- Manager gets manager role
-INSERT INTO tenant_users (tenant_id, user_id, role) VALUES
-((SELECT id FROM tenants LIMIT 1), '550e8400-e29b-41d4-a716-446655440001', 'manager')
-ON CONFLICT (tenant_id, user_id) DO NOTHING;
-
--- Staff users get user role
-INSERT INTO tenant_users (tenant_id, user_id, role) VALUES
-((SELECT id FROM tenants LIMIT 1), '550e8400-e29b-41d4-a716-446655440002', 'user'),
-((SELECT id FROM tenants LIMIT 1), '550e8400-e29b-41d4-a716-446655440003', 'user'),
-((SELECT id FROM tenants LIMIT 1), '550e8400-e29b-41d4-a716-446655440004', 'viewer')
-ON CONFLICT (tenant_id, user_id) DO NOTHING;
+END $$;
