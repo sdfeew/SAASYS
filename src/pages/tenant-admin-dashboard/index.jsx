@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { tenantService } from '../../services/tenantService';
-import { Plus, Edit2, Trash2, Check, X, Building2, Phone, Globe } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, Building2, Phone, Globe, ChevronRight } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 
 const TenantAdminPage = () => {
   const { user, userTenant } = useAuth();
+  const navigate = useNavigate();
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -106,6 +108,11 @@ const TenantAdminPage = () => {
     });
     setEditingId(tenant.id);
     setShowForm(true);
+  };
+
+  // Navigate to tenant modules
+  const handleViewTenant = (tenantId) => {
+    navigate(`/dynamic-module-list-view?tenantId=${tenantId}`);
   };
 
   // Generate code from name
@@ -322,10 +329,13 @@ const TenantAdminPage = () => {
             tenants.map((tenant) => (
               <div
                 key={tenant.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden border border-gray-200"
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden border border-gray-200 cursor-pointer group"
               >
                 {/* Tenant Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-24 relative">
+                <div 
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-24 relative cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-colors"
+                  onClick={() => handleViewTenant(tenant.id)}
+                >
                   {tenant.logo_url && (
                     <img
                       src={tenant.logo_url}
@@ -343,7 +353,12 @@ const TenantAdminPage = () => {
                 {/* Tenant Content */}
                 <div className="p-6 pt-12">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-bold text-gray-900">{tenant.name}</h3>
+                    <h3 
+                      className="text-lg font-bold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                      onClick={() => handleViewTenant(tenant.id)}
+                    >
+                      {tenant.name}
+                    </h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       tenant.status === 'active'
                         ? 'bg-green-100 text-green-800'
@@ -371,6 +386,13 @@ const TenantAdminPage = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-4 border-t border-gray-200">
+                    <button
+                      onClick={() => handleViewTenant(tenant.id)}
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-semibold"
+                    >
+                      <ChevronRight size={16} />
+                      Open
+                    </button>
                     <button
                       onClick={() => handleEdit(tenant)}
                       className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
