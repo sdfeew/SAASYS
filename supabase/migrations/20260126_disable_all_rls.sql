@@ -29,34 +29,20 @@ ALTER TABLE public.sub_module_records DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.attachments DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.main_modules DISABLE ROW LEVEL SECURITY;
 
--- Ensure auth.users policies are not interfering
--- Drop all policies across the board to start fresh
-DO $$ 
-DECLARE 
-    r RECORD;
-BEGIN
-    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')
-    LOOP
-        EXECUTE 'DROP POLICY IF EXISTS "' || policy_name || '" ON public.' || r.tablename || ';'
-        FROM information_schema.table_constraints
-        WHERE table_name = r.tablename
-        AND constraint_type = 'FOREIGN KEY'
-        LIMIT 1;
-    END LOOP;
-END $$;
-
--- Final step: Disable RLS on all public tables to avoid conflicts
--- Security will be enforced in the application code
-DO $$
-DECLARE
-    table_name text;
-BEGIN
-    FOR table_name IN 
-        SELECT tablename FROM pg_tables WHERE schemaname = 'public'
-    LOOP
-        EXECUTE 'ALTER TABLE public.' || quote_ident(table_name) || ' DISABLE ROW LEVEL SECURITY;';
-    END LOOP;
-END $$;
+-- Drop all remaining policies on these tables
+DROP POLICY IF EXISTS "sub_modules_select" ON public.sub_modules;
+DROP POLICY IF EXISTS "sub_modules_insert" ON public.sub_modules;
+DROP POLICY IF EXISTS "sub_modules_update" ON public.sub_modules;
+DROP POLICY IF EXISTS "fields_select" ON public.sub_module_fields;
+DROP POLICY IF EXISTS "fields_insert" ON public.sub_module_fields;
+DROP POLICY IF EXISTS "fields_update" ON public.sub_module_fields;
+DROP POLICY IF EXISTS "records_select" ON public.sub_module_records;
+DROP POLICY IF EXISTS "records_insert" ON public.sub_module_records;
+DROP POLICY IF EXISTS "records_update" ON public.sub_module_records;
+DROP POLICY IF EXISTS "records_delete" ON public.sub_module_records;
+DROP POLICY IF EXISTS "attachments_select" ON public.attachments;
+DROP POLICY IF EXISTS "attachments_insert" ON public.attachments;
+DROP POLICY IF EXISTS "attachments_delete" ON public.attachments;
 
 -- Verify all RLS is disabled
 -- Run this to check status:
