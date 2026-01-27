@@ -185,6 +185,26 @@ const SchemaBuilderInterface = () => {
     setIsFieldFormOpen(true);
   };
 
+  // Helper function to map form field types to database field types
+  const getDataTypeValue = (formType) => {
+    const typeMap = {
+      'text': 'TEXT',
+      'textarea': 'TEXTAREA',
+      'number': 'NUMBER',
+      'email': 'EMAIL',
+      'phone': 'PHONE',
+      'date': 'DATE',
+      'datetime': 'DATETIME',
+      'currency': 'CURRENCY',
+      'boolean': 'BOOLEAN',
+      'select': 'SELECT',
+      'multiselect': 'MULTI_SELECT',
+      'reference': 'REFERENCE_ONE',
+      'file': 'JSONB'
+    };
+    return typeMap[formType?.toLowerCase()] || 'TEXT';
+  };
+
   const handleSaveField = async (fieldData) => {
     try {
       setSaving(true);
@@ -193,7 +213,7 @@ const SchemaBuilderInterface = () => {
       const mappedData = {
         name: fieldData?.name,
         label: fieldData?.label,
-        dataType: fieldData?.type || fieldData?.dataType, // Handle both form field and db field
+        dataType: getDataTypeValue(fieldData?.type || fieldData?.dataType), // Convert to uppercase
         required: fieldData?.required || false,
         uniqueConstraint: fieldData?.unique || fieldData?.uniqueConstraint || false,
         defaultValue: fieldData?.defaultValue || null,
