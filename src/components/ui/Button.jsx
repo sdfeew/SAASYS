@@ -109,11 +109,14 @@ const Button = React.forwardRef(({
     // When asChild is true, merge icons into the child element
     if (asChild) {
         try {
-            if (!children || React.Children?.count(children) !== 1) {
+            // Get all children as array
+            const childrenArray = React.Children.toArray(children);
+            
+            if (!childrenArray || childrenArray.length !== 1) {
                 return renderFallbackButton();
             }
 
-            const child = React.Children?.only(children);
+            const child = childrenArray[0];
 
             if (!React.isValidElement(child)) {
                 return renderFallbackButton();
