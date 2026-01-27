@@ -136,7 +136,18 @@ const SchemaBuilderInterface = () => {
   const handleSaveModule = async (moduleData) => {
     try {
       setSaving(true);
-      const newModule = await moduleService?.createSubModule(tenantId, moduleData);
+      
+      // Ensure mainModuleId is provided
+      if (!moduleData?.mainModuleId) {
+        alert('Please select a parent module');
+        setSaving(false);
+        return;
+      }
+      
+      const newModule = await moduleService?.createSubModule(tenantId, {
+        ...moduleData,
+        main_module_id: moduleData?.mainModuleId
+      });
       
       // Add to modules list
       setModules(modules?.map(mod => 
@@ -145,8 +156,8 @@ const SchemaBuilderInterface = () => {
               ...mod,
               subModules: [...(mod?.subModules || []), {
                 id: newModule?.id,
-                name: newModule?.name,
-                icon: newModule?.icon_name,
+                name: extractName(newModule?.name),
+                icon: newModule?.icon_name || 'Package',
                 code: newModule?.code
               }]
             }
@@ -156,6 +167,7 @@ const SchemaBuilderInterface = () => {
       setIsModuleModalOpen(false);
     } catch (error) {
       console.error('Error saving module:', error);
+      alert('Error creating module: ' + (error?.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }

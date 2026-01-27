@@ -4,13 +4,13 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 
-const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null }) => {
+const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null, mainModules = [] }) => {
   const [formData, setFormData] = useState(module || {
     name: '',
     code: '',
     description: '',
     icon: 'Folder',
-    parentModule: '',
+    mainModuleId: '',
     permissions: []
   });
 
@@ -27,13 +27,11 @@ const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null }) =>
     { value: 'Grid3x3', label: 'Grid' }
   ];
 
-  const parentModuleOptions = [
-    { value: '', label: 'None (Top Level)' },
-    { value: 'hr', label: 'Human Resources' },
-    { value: 'crm', label: 'Customer Relations' },
-    { value: 'inventory', label: 'Inventory Management' },
-    { value: 'logistics', label: 'Logistics' }
-  ];
+  // Build options from mainModules prop
+  const parentModuleOptions = mainModules?.map(mod => ({
+    value: mod?.id,
+    label: mod?.name || 'Unnamed Module'
+  })) || [];
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -109,9 +107,10 @@ const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null }) =>
               <Select
                 label="Parent Module"
                 options={parentModuleOptions}
-                value={formData?.parentModule}
-                onChange={(value) => handleInputChange('parentModule', value)}
-                description="Organize under a parent module"
+                value={formData?.mainModuleId}
+                onChange={(value) => handleInputChange('mainModuleId', value)}
+                description="Select a parent module"
+                required
               />
             </div>
 
