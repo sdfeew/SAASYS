@@ -60,7 +60,7 @@ export const dashboardService = {
         is_published: false,
         created_by: user.id
       })
-      .select('*, created_by_user:created_by(id, full_name, avatar_url)')
+      .select('*')
       .single();
     
     if (error) throw error;
@@ -77,7 +77,7 @@ export const dashboardService = {
         is_published: dashboard.isPublished
       })
       .eq('id', id)
-      .select('*, created_by_user:created_by(id, full_name, avatar_url)')
+      .select('*')
       .single();
     
     if (error) throw error;
