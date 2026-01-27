@@ -15,6 +15,7 @@ import Icon from '../../components/AppIcon';
 import ModuleConfigurationModal from './components/ModuleConfigurationModal';
 import DeploymentConfirmationModal from './components/DeploymentConfirmationModal';
 import PreviewPanel from './components/PreviewPanel';
+import NotificationDropdown from '../../components/ui/NotificationDropdown';
 
 const DATA_TYPES = [
   { value: 'TEXT', label: 'Text' },
@@ -268,10 +269,7 @@ const SchemaBuilderInterface = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <button className="relative p-2 hover:bg-muted rounded-md transition-smooth">
-                <Bell size={20} className="text-foreground" />
-                <NotificationBadge count={3} className="absolute -top-1 -right-1" />
-              </button>
+              <NotificationDropdown />
               <UserProfileDropdown />
             </div>
           </div>

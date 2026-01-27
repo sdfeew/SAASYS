@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import AdminSidebar from '../../components/ui/AdminSidebar';
 import ModuleBreadcrumbs from '../../components/ui/ModuleBreadcrumbs';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
@@ -8,34 +9,51 @@ import WidgetLibrary from './components/WidgetLibrary';
 import DashboardCanvas from './components/DashboardCanvas';
 import WidgetConfigPanel from './components/WidgetConfigPanel';
 import DashboardToolbar from './components/DashboardToolbar';
+import NotificationDropdown from '../../components/ui/NotificationDropdown';
 import { dashboardService } from '../../services/dashboardService';
 
 const DashboardBuilderStudio = () => {
+  const { tenantId } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [widgetLibraryCollapsed, setWidgetLibraryCollapsed] = useState(false);
-  const [dashboardName, setDashboardName] = useState('Sales Performance Dashboard');
+  const [dashboardName, setDashboardName] = useState('');
   const [widgets, setWidgets] = useState([]);
   const [selectedWidget, setSelectedWidget] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [notificationCount] = useState(3);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [currentDashboardId, setCurrentDashboardId] = useState(null);
+  const [availableDashboards, setAvailableDashboards] = useState([]);
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+    if (tenantId) {
+      loadDashboards();
+    }
+  }, [tenantId]);
 
-  const loadDashboard = async () => {
+  const loadDashboards = async () => {
     try {
+      setLoading(true);
       const dashboards = await dashboardService?.getAll();
+      setAvailableDashboards(dashboards || []);
+      
       if (dashboards?.length > 0) {
-        const dashboard = dashboards?.[0];
-        setDashboardName(dashboard?.name);
-        setWidgets(dashboard?.widgets || []);
-        setCurrentDashboardId(dashboard?.id);
+        const firstDashboard = dashboards?.[0];
+        setDashboardName(firstDashboard?.name || 'New Dashboard');
+        setWidgets(firstDashboard?.widgets || []);
+        setCurrentDashboardId(firstDashboard?.id);
+      } else {
+        // Create a new empty dashboard
+        const newDashboard = await dashboardService?.create({
+          name: 'My Dashboard',
+          widgets: []
+        });
+        setCurrentDashboardId(newDashboard?.id);
+        setDashboardName('My Dashboard');
       }
     } catch (error) {
-      console.error('Error loading dashboard:', error);
+      console.error('Error loading dashboards:', error);
+      setDashboardName('My Dashboard');
     } finally {
       setLoading(false);
     }
@@ -66,36 +84,45 @@ const DashboardBuilderStudio = () => {
 
   const handleSave = async () => {
     try {
+      setSaving(true);
       if (currentDashboardId) {
         await dashboardService?.update(currentDashboardId, {
           name: dashboardName,
-          widgets: widgets
+          widgets: widgets,
+          status: 'draft'
         });
+        console.log('Dashboard saved successfully');
       } else {
         const newDashboard = await dashboardService?.create({
           name: dashboardName,
-          widgets: widgets
+          widgets: widgets,
+          status: 'draft'
         });
         setCurrentDashboardId(newDashboard?.id);
       }
-      console.log('Dashboard saved successfully');
     } catch (error) {
       console.error('Error saving dashboard:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handlePublish = async () => {
     try {
+      setSaving(true);
       if (currentDashboardId) {
         await dashboardService?.update(currentDashboardId, {
           name: dashboardName,
           widgets: widgets,
-          isPublished: true
+          status: 'published',
+          published_at: new Date().toISOString()
         });
         console.log('Dashboard published successfully');
       }
     } catch (error) {
       console.error('Error publishing dashboard:', error);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -139,10 +166,7 @@ const DashboardBuilderStudio = () => {
             </div>
 
             <div className="flex items-center gap-2 md:gap-3">
-              <button className="relative p-2 rounded-md hover:bg-muted transition-smooth">
-                <Icon name="Bell" size={20} />
-                <NotificationBadge count={notificationCount} className="absolute -top-1 -right-1" />
-              </button>
+              <NotificationDropdown />
               <UserProfileDropdown />
             </div>
           </div>
