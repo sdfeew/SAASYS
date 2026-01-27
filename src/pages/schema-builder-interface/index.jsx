@@ -53,6 +53,15 @@ const SchemaBuilderInterface = () => {
     }
   }, [tenantId]);
 
+  // Helper function to extract English name from JSONB or string
+  const extractName = (name) => {
+    if (!name) return 'Unnamed';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name?.en) return name.en;
+    if (typeof name === 'object' && name?.ar) return name.ar;
+    return 'Unnamed';
+  };
+
   const loadModules = async () => {
     try {
       setLoading(true);
@@ -66,19 +75,19 @@ const SchemaBuilderInterface = () => {
         // Structure modules with their sub-modules
         const structuredModules = mainModulesData.map(mainModule => ({
           id: mainModule?.id,
-          name: mainModule?.name,
+          name: extractName(mainModule?.name),
           icon: mainModule?.icon_name,
-          description: mainModule?.description,
+          description: extractName(mainModule?.description),
           code: mainModule?.code,
           subModules: subModulesData
             ?.filter(sub => sub?.main_module_id === mainModule?.id)
             ?.map(sub => ({
               id: sub?.id,
-              name: sub?.name,
+              name: extractName(sub?.name),
               icon: sub?.icon_name || 'Package',
               fieldCount: 0,
               code: sub?.code,
-              description: sub?.description
+              description: extractName(sub?.description)
             })) || []
         }));
         

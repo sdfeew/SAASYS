@@ -6,6 +6,15 @@ import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
 
 const PreviewPanel = ({ module, fields }) => {
+  // Helper function to safely extract name from JSONB or string
+  const extractName = (name) => {
+    if (!name) return 'Unnamed';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name?.en) return name.en;
+    if (typeof name === 'object' && name?.ar) return name.ar;
+    return 'Unnamed';
+  };
+
   const renderFieldPreview = (field) => {
     const commonProps = {
       label: field?.label,
@@ -97,10 +106,10 @@ const PreviewPanel = ({ module, fields }) => {
             <div className="flex items-center gap-2 mb-2">
               <Icon name={module.icon} size={20} className="text-primary" />
               <h3 className="text-base font-heading font-semibold text-foreground">
-                {module.name}
+                {extractName(module.name)}
               </h3>
             </div>
-            <p className="caption text-muted-foreground">{module.description}</p>
+            <p className="caption text-muted-foreground">{extractName(module.description)}</p>
           </div>
         )}
 

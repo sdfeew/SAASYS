@@ -5,6 +5,15 @@ import Button from '../../../components/ui/Button';
 const DeploymentConfirmationModal = ({ isOpen, onClose, onConfirm, module, fieldCount }) => {
   if (!isOpen) return null;
 
+  // Helper function to safely extract name from JSONB or string
+  const extractName = (name) => {
+    if (!name) return 'Unnamed';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name?.en) return name.en;
+    if (typeof name === 'object' && name?.ar) return name.ar;
+    return 'Unnamed';
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
       <div className="w-full max-w-md bg-card border border-border rounded-lg shadow-elevation-4 overflow-hidden">
@@ -26,7 +35,7 @@ const DeploymentConfirmationModal = ({ isOpen, onClose, onConfirm, module, field
           <div className="bg-muted rounded-lg p-4 mb-6 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Module Name:</span>
-              <span className="text-sm font-medium text-foreground">{module?.name}</span>
+              <span className="text-sm font-medium text-foreground">{extractName(module?.name)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Total Fields:</span>

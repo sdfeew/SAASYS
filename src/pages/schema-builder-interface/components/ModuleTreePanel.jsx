@@ -6,6 +6,15 @@ const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule 
   const [expandedModules, setExpandedModules] = useState(new Set(['hr', 'crm']));
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Helper function to safely extract name from JSONB or string
+  const extractName = (name) => {
+    if (!name) return 'Unnamed';
+    if (typeof name === 'string') return name;
+    if (typeof name === 'object' && name?.en) return name.en;
+    if (typeof name === 'object' && name?.ar) return name.ar;
+    return 'Unnamed';
+  };
+
   const toggleExpand = (moduleId) => {
     const newExpanded = new Set(expandedModules);
     if (newExpanded?.has(moduleId)) {
@@ -18,9 +27,9 @@ const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule 
 
   const filteredModules = modules?.filter(module => {
     if (!module?.name) return false;
-    const moduleName = String(module?.name)?.toLowerCase();
+    const moduleName = extractName(module?.name)?.toLowerCase();
     const subModuleMatch = module?.subModules?.some(sub => 
-      sub?.name ? String(sub?.name)?.toLowerCase()?.includes(searchQuery?.toLowerCase()) : false
+      sub?.name ? extractName(sub?.name)?.toLowerCase()?.includes(searchQuery?.toLowerCase()) : false
     );
     return moduleName?.includes(searchQuery?.toLowerCase()) || subModuleMatch;
   });
@@ -62,7 +71,7 @@ const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule 
                 className="text-muted-foreground"
               />
               <Icon name={module.icon} size={16} className="text-primary" />
-              <span className="flex-1 text-left font-medium">{module.name}</span>
+              <span className="flex-1 text-left font-medium">{extractName(module.name)}</span>
               <span className="caption text-muted-foreground">{module.subModules?.length || 0}</span>
             </button>
 
@@ -79,7 +88,7 @@ const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule 
                     }`}
                   >
                     <Icon name={subModule?.icon} size={14} />
-                    <span className="flex-1 text-left">{subModule?.name}</span>
+                    <span className="flex-1 text-left">{extractName(subModule?.name)}</span>
                     <span className="caption">{subModule?.fieldCount}</span>
                   </button>
                 ))}
