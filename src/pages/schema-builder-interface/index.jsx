@@ -15,6 +15,7 @@ import Icon from '../../components/AppIcon';
 import ModuleConfigurationModal from './components/ModuleConfigurationModal';
 import DeploymentConfirmationModal from './components/DeploymentConfirmationModal';
 import PreviewPanel from './components/PreviewPanel';
+import FieldListManager from './components/FieldListManager';
 import NotificationDropdown from '../../components/ui/NotificationDropdown';
 
 const DATA_TYPES = [
@@ -110,7 +111,7 @@ const SchemaBuilderInterface = () => {
 
   const loadFieldsForModule = async (moduleId) => {
     try {
-      const fieldsData = await fieldService?.getBySubModuleId(moduleId);
+      const fieldsData = await fieldService?.getAllFields(moduleId);
       setFields(fieldsData || []);
     } catch (error) {
       console.error('Error loading fields:', error);
