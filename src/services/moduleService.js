@@ -29,7 +29,7 @@ export const moduleService = {
   async getAllSubModules(tenantId) {
     const { data, error } = await supabase
       ?.from('sub_modules')
-      ?.select('*, main_module:main_modules(*)')
+      ?.select('*')
       ?.eq('tenant_id', tenantId)
       ?.eq('status', 'active')
       ?.order('order_index');
@@ -41,7 +41,7 @@ export const moduleService = {
   async getSubModuleByCode(tenantId, code) {
     const { data, error } = await supabase
       ?.from('sub_modules')
-      ?.select('*, main_module:main_modules(*)')
+      ?.select('*')
       ?.eq('tenant_id', tenantId)
       ?.eq('code', code)
       ?.single();
@@ -53,7 +53,7 @@ export const moduleService = {
   async getSubModuleById(id) {
     const { data, error } = await supabase
       ?.from('sub_modules')
-      ?.select('*, main_module:main_modules(*)')
+      ?.select('*')
       ?.eq('id', id)
       ?.single();
     
@@ -73,7 +73,7 @@ export const moduleService = {
         icon: subModule?.icon,
         status: 'active'
       })
-      ?.select('*, main_module:main_modules(*)')
+      ?.select('*')
       ?.single();
     
     if (error) throw error;
@@ -90,7 +90,7 @@ export const moduleService = {
         status: subModule?.status
       })
       ?.eq('id', id)
-      ?.select('*, main_module:main_modules(*)')
+      ?.select('*')
       ?.single();
     
     if (error) throw error;
