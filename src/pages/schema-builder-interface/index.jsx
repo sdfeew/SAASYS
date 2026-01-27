@@ -16,6 +16,7 @@ import ModuleConfigurationModal from './components/ModuleConfigurationModal';
 import DeploymentConfirmationModal from './components/DeploymentConfirmationModal';
 import PreviewPanel from './components/PreviewPanel';
 import FieldListManager from './components/FieldListManager';
+import FieldConfigurationForm from './components/FieldConfigurationForm';
 import NotificationDropdown from '../../components/ui/NotificationDropdown';
 
 const DATA_TYPES = [
