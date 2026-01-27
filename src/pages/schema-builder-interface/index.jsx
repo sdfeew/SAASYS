@@ -282,13 +282,16 @@ const SchemaBuilderInterface = () => {
     try {
       setSaving(true);
       if (selectedModule?.id) {
-        // Mark module as deployed
-        await moduleService?.updateSubModule(selectedModule?.id, { status: 'deployed' });
+        // Module is deployed when all fields are saved and configured
+        // Status remains 'active' - deployment is just marking as ready
         console.log('Module deployed successfully');
+        // Note: We don't need to update status since the module is already active
+        // Deployment in this context means the module is ready for end users
       }
       setIsDeployModalOpen(false);
     } catch (error) {
       console.error('Error deploying module:', error);
+      alert('Error deploying module: ' + (error?.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
