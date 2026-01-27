@@ -188,13 +188,29 @@ const SchemaBuilderInterface = () => {
   const handleSaveField = async (fieldData) => {
     try {
       setSaving(true);
+      
+      // Map form field names to database field names
+      const mappedData = {
+        name: fieldData?.name,
+        label: fieldData?.label,
+        dataType: fieldData?.type || fieldData?.dataType, // Handle both form field and db field
+        required: fieldData?.required || false,
+        uniqueConstraint: fieldData?.unique || fieldData?.uniqueConstraint || false,
+        defaultValue: fieldData?.defaultValue || null,
+        validationRules: fieldData?.validation || fieldData?.validationRules || [],
+        uiConfig: {
+          placeholder: fieldData?.placeholder,
+          helpText: fieldData?.helpText
+        }
+      };
+      
       if (editingField) {
         // Update existing field
-        await fieldService?.updateField(editingField?.id, fieldData);
-        setFields(fields?.map(f => f?.id === editingField?.id ? { ...fieldData, id: f?.id } : f));
+        await fieldService?.updateField(editingField?.id, mappedData);
+        setFields(fields?.map(f => f?.id === editingField?.id ? { ...mappedData, id: f?.id } : f));
       } else {
         // Create new field
-        const newField = await fieldService?.createField(tenantId, selectedModule?.id, fieldData);
+        const newField = await fieldService?.createField(tenantId, selectedModule?.id, mappedData);
         setFields([...fields, newField]);
       }
       setIsFieldFormOpen(false);
