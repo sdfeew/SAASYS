@@ -2,12 +2,16 @@ import { supabase } from '../lib/supabase';
 
 export const dashboardService = {
   async getAll(tenantId, scope = null) {
+    // Build query without relationships
     let query = supabase
       .from('dashboards')
-      .select('*, created_by_user:created_by(id, full_name, avatar_url)')
-      .eq('tenant_id', tenantId)
-      .eq('is_published', true)
+      .select('*')
       .order('created_at', { ascending: false });
+
+    // Only filter by tenant if provided
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
 
     if (scope) {
       query = query.eq('scope', scope);
@@ -22,14 +26,7 @@ export const dashboardService = {
   async getById(id) {
     const { data, error } = await supabase
       .from('dashboards')
-      .select(`
-        *,
-        created_by_user:created_by(id, full_name, avatar_url),
-        widgets:dashboard_widgets(
-          *,
-          data_source:data_sources(*)
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single();
     

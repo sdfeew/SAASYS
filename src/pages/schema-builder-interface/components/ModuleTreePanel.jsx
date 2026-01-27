@@ -16,10 +16,14 @@ const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule 
     setExpandedModules(newExpanded);
   };
 
-  const filteredModules = modules?.filter(module => 
-    module.name?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
-    module.subModules?.some(sub => sub?.name?.toLowerCase()?.includes(searchQuery?.toLowerCase()))
-  );
+  const filteredModules = modules?.filter(module => {
+    if (!module?.name) return false;
+    const moduleName = String(module?.name)?.toLowerCase();
+    const subModuleMatch = module?.subModules?.some(sub => 
+      sub?.name ? String(sub?.name)?.toLowerCase()?.includes(searchQuery?.toLowerCase()) : false
+    );
+    return moduleName?.includes(searchQuery?.toLowerCase()) || subModuleMatch;
+  });
 
   return (
     <div className="h-full flex flex-col bg-card border-r border-border">

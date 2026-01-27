@@ -34,7 +34,8 @@ const DashboardBuilderStudio = () => {
   const loadDashboards = async () => {
     try {
       setLoading(true);
-      const dashboards = await dashboardService?.getAll();
+      // Pass tenantId to getAll
+      const dashboards = await dashboardService?.getAll(tenantId);
       setAvailableDashboards(dashboards || []);
       
       if (dashboards?.length > 0) {
