@@ -9,6 +9,7 @@ import Select from '../../components/ui/Select';
 import AdminSidebar from '../../components/ui/AdminSidebar';
 import NotificationBadge from '../../components/ui/NotificationBadge';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
+import ModuleTreePanel from './components/ModuleTreePanel';
 
 const DATA_TYPES = [
   { value: 'TEXT', label: 'Text' },

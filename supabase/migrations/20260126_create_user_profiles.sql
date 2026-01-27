@@ -13,7 +13,7 @@ INSERT INTO user_profiles (id, tenant_id, full_name, email, avatar_url, role_cod
 SELECT 
     u.id,
     (SELECT id FROM tenants WHERE code = 'default-tenant' LIMIT 1),
-    COALESCE(u.user_metadata->>'full_name', u.email),
+    SPLIT_PART(u.email, '@', 1),
     u.email,
     'https://api.dicebear.com/7.x/avataaars/svg?seed=' || SPLIT_PART(u.email, '@', 1),
     CASE 
