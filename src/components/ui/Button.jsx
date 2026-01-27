@@ -140,7 +140,12 @@ const Button = React.forwardRef(({
                 children: content,
             });
 
-            return <Comp ref={ref} {...props}>{clonedChild}</Comp>;
+            // Only pass essential props to Slot to avoid passing invalid children
+            const slotProps = {
+                ref,
+            };
+            
+            return <Slot {...slotProps}>{clonedChild}</Slot>;
         } catch {
             return renderFallbackButton();
         }
