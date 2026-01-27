@@ -287,6 +287,9 @@ const SchemaBuilderInterface = () => {
         console.log('Module deployed successfully');
         // Note: We don't need to update status since the module is already active
         // Deployment in this context means the module is ready for end users
+        
+        // Reload modules to reflect changes in sidebar
+        await loadModules();
       }
       setIsDeployModalOpen(false);
     } catch (error) {
