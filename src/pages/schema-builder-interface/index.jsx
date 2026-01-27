@@ -190,20 +190,18 @@ const SchemaBuilderInterface = () => {
       setSaving(true);
       if (editingField) {
         // Update existing field
-        await fieldService?.update(editingField?.id, fieldData);
+        await fieldService?.updateField(editingField?.id, fieldData);
         setFields(fields?.map(f => f?.id === editingField?.id ? { ...fieldData, id: f?.id } : f));
       } else {
         // Create new field
-        const newField = await fieldService?.create({
-          ...fieldData,
-          sub_module_id: selectedModule?.id
-        });
+        const newField = await fieldService?.createField(tenantId, selectedModule?.id, fieldData);
         setFields([...fields, newField]);
       }
       setIsFieldFormOpen(false);
       setEditingField(null);
     } catch (error) {
       console.error('Error saving field:', error);
+      alert('Error saving field: ' + (error?.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
@@ -213,10 +211,11 @@ const SchemaBuilderInterface = () => {
     if (window.confirm('Are you sure you want to delete this field?')) {
       try {
         setSaving(true);
-        await fieldService?.delete(fieldId);
+        await fieldService?.deleteField(fieldId);
         setFields(fields?.filter(f => f?.id !== fieldId));
       } catch (error) {
         console.error('Error deleting field:', error);
+        alert('Error deleting field: ' + (error?.message || 'Unknown error'));
       } finally {
         setSaving(false);
       }
@@ -228,11 +227,12 @@ const SchemaBuilderInterface = () => {
       setSaving(true);
       // Update order_index for each field
       await Promise.all(newFields.map((field, index) =>
-        fieldService?.update(field?.id, { order_index: index })
+        fieldService?.updateField(field?.id, { order_index: index })
       ));
       setFields(newFields);
     } catch (error) {
       console.error('Error reordering fields:', error);
+      alert('Error reordering fields: ' + (error?.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
