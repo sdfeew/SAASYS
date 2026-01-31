@@ -3,7 +3,7 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
 
-const RecordHeader = ({ record, onEdit, onDelete, onSave, onCancel, isEditing }) => {
+const RecordHeader = ({ record, onEdit, onDelete, onSave, onCancel, onPrint, onExport, onShare, onEmail, isEditing }) => {
   const statusColors = {
     active: 'bg-success/10 text-success',
     pending: 'bg-warning/10 text-warning',
@@ -45,11 +45,17 @@ const RecordHeader = ({ record, onEdit, onDelete, onSave, onCancel, isEditing })
               <Button variant="outline" iconName="Edit" iconPosition="left" onClick={onEdit}>
                 Edit
               </Button>
-              <Button variant="outline" iconName="Share2" iconPosition="left">
+              <Button variant="outline" iconName="Printer" iconPosition="left" onClick={onPrint}>
+                Print
+              </Button>
+              <Button variant="outline" iconName="Download" iconPosition="left" onClick={onExport}>
+                Export
+              </Button>
+              <Button variant="outline" iconName="Share2" iconPosition="left" onClick={onShare}>
                 Share
               </Button>
-              <Button variant="outline" iconName="Download" iconPosition="left">
-                Export
+              <Button variant="outline" iconName="Mail" iconPosition="left" onClick={onEmail}>
+                Email
               </Button>
               <Button variant="destructive" iconName="Trash2" iconPosition="left" onClick={onDelete}>
                 Delete

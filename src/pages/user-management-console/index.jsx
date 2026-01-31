@@ -387,6 +387,7 @@ const UserManagementConsole = () => {
                             onViewDetails={handleViewDetails}
                             onToggleStatus={handleToggleStatus}
                             onRoleChange={handleRoleChange}
+                            onDelete={handleDeleteUser}
                           />
                         </td>
                       </tr>

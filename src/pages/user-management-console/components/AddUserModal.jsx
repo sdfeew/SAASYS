@@ -3,8 +3,9 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
+import { userService } from '../../../services/userService';
 
-const AddUserModal = ({ onClose, onAdd }) => {
+const AddUserModal = ({ onClose, onAdd, isLoading = false }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,6 +16,7 @@ const AddUserModal = ({ onClose, onAdd }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
 
   const roleOptions = [
     { value: 'admin', label: 'Administrator', description: 'Full system access' },
@@ -58,10 +60,31 @@ const AddUserModal = ({ onClose, onAdd }) => {
     return Object.keys(newErrors)?.length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e?.preventDefault();
-    if (validateForm()) {
-      onAdd(formData);
+    if (!validateForm()) return;
+
+    try {
+      setSaving(true);
+      const newUser = await userService?.create({
+        email: formData?.email,
+        full_name: formData?.name,
+        role_code: formData?.role,
+        metadata: {
+          department: formData?.department,
+          job_title: formData?.jobTitle
+        }
+      });
+      
+      if (onAdd) {
+        onAdd(newUser);
+      }
+      onClose();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      setErrors({ submit: error?.message || 'Failed to create user' });
+    } finally {
+      setSaving(false);
     }
   };
 

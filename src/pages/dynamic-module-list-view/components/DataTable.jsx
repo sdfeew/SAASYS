@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { getLangText } from '../../../utils/languageUtils';
 
 const DataTable = ({ 
   columns, 
@@ -11,7 +12,9 @@ const DataTable = ({
   onSelectRow, 
   onSelectAll, 
   onSort,
-  sortConfig 
+  sortConfig,
+  onEdit,
+  moduleId
 }) => {
   const navigate = useNavigate();
   const [expandedRows, setExpandedRows] = useState(new Set());
@@ -22,12 +25,12 @@ const DataTable = ({
   };
 
   const handleRowClick = (recordId) => {
-    navigate(`/record-detail-management?id=${recordId}`);
+    navigate(`/record-detail-management?id=${recordId}&moduleId=${moduleId}`);
   };
 
   const handleEdit = (e, recordId) => {
     e?.stopPropagation();
-    console.log('Edit record:', recordId);
+    onEdit?.(recordId);
   };
 
   const handleDelete = (e, recordId) => {
@@ -48,6 +51,11 @@ const DataTable = ({
   const renderCellValue = (value, type) => {
     if (value === null || value === undefined) {
       return <span className="text-muted-foreground italic">—</span>;
+    }
+
+    // Handle JSONB multilingual fields
+    if (typeof value === 'object' && !Array.isArray(value) && (value?.ar || value?.en)) {
+      value = getLangText(value, 'en');
     }
 
     switch (type) {
@@ -74,7 +82,7 @@ const DataTable = ({
       case 'number':
         return new Intl.NumberFormat('en-US')?.format(value);
       default:
-        return value;
+        return String(value) || '—';
     }
   };
 
@@ -98,7 +106,7 @@ const DataTable = ({
                   onClick={() => column?.sortable && handleSort(column?.key)}
                 >
                   <div className="flex items-center gap-2">
-                    <span>{column?.label}</span>
+                    <span>{getLangText(column?.label, 'en') || column?.key}</span>
                     {column?.sortable && (
                       <Icon
                         name={
@@ -181,7 +189,7 @@ const DataTable = ({
                     {columns?.slice(0, 2)?.map((column) => (
                       <div key={column?.key} className="mb-2">
                         <span className="caption text-muted-foreground block mb-1">
-                          {column?.label}
+                          {getLangText(column?.label, 'en') || column?.key}
                         </span>
                         <span className="text-sm md:text-base text-foreground font-medium">
                           {renderCellValue(row?.[column?.key], column?.type)}
@@ -196,7 +204,7 @@ const DataTable = ({
                     {columns?.slice(2)?.map((column) => (
                       <div key={column?.key} className="flex justify-between items-center">
                         <span className="caption text-muted-foreground">
-                          {column?.label}
+                          {getLangText(column?.label, 'en') || column?.key}
                         </span>
                         <span className="text-sm text-foreground">
                           {renderCellValue(row?.[column?.key], column?.type)}

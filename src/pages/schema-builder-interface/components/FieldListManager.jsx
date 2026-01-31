@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
+import { getLangText } from '../../../utils/languageUtils';
 
 const FieldListManager = ({ fields, onEditField, onDeleteField, onReorderFields, onAddField }) => {
   const [draggedIndex, setDraggedIndex] = useState(null);
@@ -106,7 +107,7 @@ const FieldListManager = ({ fields, onEditField, onDeleteField, onReorderFields,
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                   <div className="flex items-center gap-2">
                     <Icon name={getFieldTypeIcon(field?.type)} size={16} className="text-primary" />
-                    <h4 className="text-sm font-medium text-foreground">{field?.label}</h4>
+                    <h4 className="text-sm font-medium text-foreground">{getLangText(field?.label, 'en')}</h4>
                   </div>
                   <span className={`caption px-2 py-0.5 rounded-full ${getFieldTypeBadge(field?.type)}`}>
                     {field?.type}

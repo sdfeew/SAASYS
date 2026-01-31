@@ -4,6 +4,7 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { getLangText } from '../../../utils/languageUtils';
 
 const PreviewPanel = ({ module, fields }) => {
   // Helper function to safely extract name from JSONB or string
@@ -17,9 +18,9 @@ const PreviewPanel = ({ module, fields }) => {
 
   const renderFieldPreview = (field) => {
     const commonProps = {
-      label: field?.label,
-      placeholder: field?.placeholder,
-      description: field?.helpText,
+      label: getLangText(field?.label, 'en'),
+      placeholder: getLangText(field?.placeholder, 'en'),
+      description: getLangText(field?.helpText, 'en'),
       required: field?.required,
       disabled: true
     };
@@ -32,17 +33,17 @@ const PreviewPanel = ({ module, fields }) => {
         return (
           <div className="mb-4">
             <label className="block text-sm font-medium text-foreground mb-2">
-              {field?.label}
+              {getLangText(field?.label, 'en')}
               {field?.required && <span className="text-error ml-1">*</span>}
             </label>
             <textarea
-              placeholder={field?.placeholder}
+              placeholder={getLangText(field?.placeholder, 'en')}
               disabled
               className="w-full px-3 py-2 bg-background border border-input rounded-md text-foreground resize-none"
               rows="3"
             />
-            {field?.helpText && (
-              <p className="caption text-muted-foreground mt-1">{field?.helpText}</p>
+            {getLangText(field?.helpText, 'en') && (
+              <p className="caption text-muted-foreground mt-1">{getLangText(field?.helpText, 'en')}</p>
             )}
           </div>
         );

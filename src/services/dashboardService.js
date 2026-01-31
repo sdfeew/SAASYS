@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { errorHandler } from '../utils/errorHandler';
 
 export const dashboardService = {
   async getAll(tenantId, scope = null) {

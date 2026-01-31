@@ -171,6 +171,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updatePassword = async (password, token) => {
+    try {
+      setError(null);
+      // The token should be automatically handled by Supabase from the URL
+      // Call updateUser with the new password
+      const { data, error } = await supabase?.auth?.updateUser({
+        password: password
+      });
+      
+      if (error) {
+        setError(error?.message);
+      }
+      
+      return { data, error };
+    } catch (error) {
+      const message = 'Network error. Please try again.';
+      setError(message);
+      return { data: null, error: { message } };
+    }
+  };
+
   const updateProfile = async (updates) => {
     if (!user) return { data: null, error: { message: 'No user logged in' } };
     
@@ -213,6 +234,68 @@ export const AuthProvider = ({ children }) => {
     return roleCode === role;
   };
 
+  // Resend verification email
+  const resendVerification = async (email) => {
+    try {
+      setError(null);
+      const { data, error } = await supabase?.auth?.resend({
+        type: 'signup',
+        email: email
+      });
+      
+      if (error) {
+        setError(error?.message);
+      }
+      
+      return { data, error };
+    } catch (error) {
+      const message = 'Failed to resend verification email. Please try again.';
+      setError(message);
+      return { data: null, error: { message } };
+    }
+  };
+
+  // Get user by ID
+  const getUserById = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        ?.from('user_profiles')
+        ?.select('*')
+        ?.eq('id', userId)
+        ?.single();
+      
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      return null;
+    }
+  };
+
+  // Update user role
+  const updateUserRole = async (userId, newRole) => {
+    if (!user || roleCode !== 'admin') {
+      return { data: null, error: { message: 'Unauthorized: Only admins can update user roles' } };
+    }
+
+    try {
+      setError(null);
+      const { data, error } = await supabase
+        ?.from('user_profiles')
+        ?.update({ role_code: newRole })
+        ?.eq('id', userId)
+        ?.select()
+        ?.single();
+      
+      if (error) throw error;
+      return { data, error: null };
+    } catch (error) {
+      const message = 'Failed to update user role';
+      setError(message);
+      return { data: null, error: { message } };
+    }
+  };
+
   const value = {
     // User data
     user,
@@ -226,7 +309,11 @@ export const AuthProvider = ({ children }) => {
     signIn,
     signOut,
     resetPassword,
+    updatePassword,
     updateProfile,
+    resendVerification,
+    getUserById,
+    updateUserRole,
     
     // Loading states
     loading,

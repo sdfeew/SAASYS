@@ -1,7 +1,7 @@
 import React from 'react';
-
 import Button from '../../../components/ui/Button';
 import NotificationBadge from '../../../components/ui/NotificationBadge';
+import { getLangText } from '../../../utils/languageUtils';
 
 const ModuleHeader = ({ 
   moduleName, 
@@ -10,13 +10,17 @@ const ModuleHeader = ({
   onRefresh,
   lastUpdated 
 }) => {
+  // Handle JSONB multilingual module name
+  const displayName = typeof moduleName === 'object' 
+    ? getLangText(moduleName, 'en')
+    : moduleName;
   return (
     <div className="bg-card border-b border-border px-4 md:px-6 lg:px-8 py-4 md:py-5 lg:py-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-heading font-semibold text-foreground truncate">
-              {moduleName}
+              {displayName}
             </h1>
             <NotificationBadge count={recordCount} variant="default" />
           </div>

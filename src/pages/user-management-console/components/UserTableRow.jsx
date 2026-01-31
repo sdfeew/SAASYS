@@ -3,7 +3,7 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Select from '../../../components/ui/Select';
 
-const UserTableRow = ({ user, onViewDetails, onToggleStatus, onRoleChange }) => {
+const UserTableRow = ({ user, onViewDetails, onToggleStatus, onRoleChange, onDelete })=> {
   const roleOptions = [
     { value: 'admin', label: 'Administrator' },
     { value: 'manager', label: 'Manager' },
@@ -90,6 +90,20 @@ const UserTableRow = ({ user, onViewDetails, onToggleStatus, onRoleChange }) => 
             iconSize={16}
           >
             <span className="sr-only">Toggle status</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              if (window.confirm(`Are you sure you want to delete ${user?.name}?`)) {
+                onDelete(user?.id);
+              }
+            }}
+            iconName="Trash2"
+            iconSize={16}
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            <span className="sr-only">Delete user</span>
           </Button>
         </div>
       </td>

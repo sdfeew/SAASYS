@@ -39,6 +39,7 @@ const SchemaBuilderInterface = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
+  const [moduleTypeForForm, setModuleTypeForForm] = useState('sub'); // Track if creating main or sub
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isFieldFormOpen, setIsFieldFormOpen] = useState(false);
   const [editingField, setEditingField] = useState(null);
@@ -132,6 +133,7 @@ const SchemaBuilderInterface = () => {
   };
 
   const handleAddModule = () => {
+    setModuleTypeForForm('sub');
     setIsModuleModalOpen(true);
   };
 
@@ -139,32 +141,53 @@ const SchemaBuilderInterface = () => {
     try {
       setSaving(true);
       
-      // Ensure mainModuleId is provided
-      if (!moduleData?.mainModuleId) {
-        alert('Please select a parent module');
-        setSaving(false);
-        return;
+      if (moduleTypeForForm === 'main') {
+        // Create a main module
+        const newMainModule = await moduleService?.createMainModule({
+          name: moduleData?.name,
+          code: moduleData?.code,
+          description: moduleData?.description,
+          icon_name: moduleData?.icon
+        });
+        
+        // Add to modules list
+        setModules([...modules, {
+          id: newMainModule?.id,
+          name: extractName(newMainModule?.name),
+          icon: newMainModule?.icon_name,
+          description: extractName(newMainModule?.description),
+          code: newMainModule?.code,
+          subModules: []
+        }]);
+        
+      } else {
+        // Create a sub-module (existing logic)
+        if (!moduleData?.mainModuleId) {
+          alert('Please select a parent module');
+          setSaving(false);
+          return;
+        }
+        
+        const newModule = await moduleService?.createSubModule(tenantId, {
+          ...moduleData,
+          main_module_id: moduleData?.mainModuleId
+        });
+        
+        // Add to modules list
+        setModules(modules?.map(mod => 
+          mod?.id === moduleData?.mainModuleId 
+            ? {
+                ...mod,
+                subModules: [...(mod?.subModules || []), {
+                  id: newModule?.id,
+                  name: extractName(newModule?.name),
+                  icon: newModule?.icon_name || 'Package',
+                  code: newModule?.code
+                }]
+              }
+            : mod
+        ));
       }
-      
-      const newModule = await moduleService?.createSubModule(tenantId, {
-        ...moduleData,
-        main_module_id: moduleData?.mainModuleId
-      });
-      
-      // Add to modules list
-      setModules(modules?.map(mod => 
-        mod?.id === moduleData?.mainModuleId 
-          ? {
-              ...mod,
-              subModules: [...(mod?.subModules || []), {
-                id: newModule?.id,
-                name: extractName(newModule?.name),
-                icon: newModule?.icon_name || 'Package',
-                code: newModule?.code
-              }]
-            }
-          : mod
-      ));
       
       setIsModuleModalOpen(false);
     } catch (error) {
@@ -356,6 +379,10 @@ const SchemaBuilderInterface = () => {
                   selectedModule={selectedModule}
                   onSelectModule={handleSelectModule}
                   onAddModule={handleAddModule}
+                  onAddMainModule={() => {
+                    setModuleTypeForForm('main');
+                    setIsModuleModalOpen(true);
+                  }}
                 />
               </div>
 
@@ -441,6 +468,7 @@ const SchemaBuilderInterface = () => {
                                 setIsFieldFormOpen(false);
                                 setEditingField(null);
                               }}
+                              allFields={fields}
                               disabled={saving}
                             />
                           </div>
@@ -494,6 +522,7 @@ const SchemaBuilderInterface = () => {
         onClose={() => setIsModuleModalOpen(false)}
         onSave={handleSaveModule}
         mainModules={modules}
+        isMainModule={moduleTypeForForm === 'main'}
         disabled={saving}
       />
       <DeploymentConfirmationModal

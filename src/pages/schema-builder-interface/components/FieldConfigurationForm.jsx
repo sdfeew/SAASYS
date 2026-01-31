@@ -4,8 +4,9 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import FormulaBuilder from './FormulaBuilder';
 
-const FieldConfigurationForm = ({ field, onSave, onCancel }) => {
+const FieldConfigurationForm = ({ field, onSave, onCancel, allFields = [] }) => {
   const [formData, setFormData] = useState(field || {
     name: '',
     label: '',
@@ -15,7 +16,10 @@ const FieldConfigurationForm = ({ field, onSave, onCancel }) => {
     defaultValue: '',
     placeholder: '',
     helpText: '',
-    validation: {}
+    validation: {},
+    is_calculated: false,
+    formula: '',
+    dependencies: []
   });
 
   const [validationRules, setValidationRules] = useState({
@@ -188,6 +192,29 @@ const FieldConfigurationForm = ({ field, onSave, onCancel }) => {
           onChange={(e) => handleInputChange('unique', e?.target?.checked)}
         />
       </div>
+      
+      <div className="border-t border-border pt-6">
+        <div className="mb-6">
+          <Checkbox
+            label="Auto-Calculated Field"
+            description="This field is calculated from a formula"
+            checked={formData?.is_calculated}
+            onChange={(e) => handleInputChange('is_calculated', e?.target?.checked)}
+          />
+        </div>
+        
+        {formData?.is_calculated && (
+          <div className="space-y-4 bg-muted/30 p-4 rounded-lg border border-border">
+            <FormulaBuilder
+              formula={formData?.formula}
+              fields={allFields}
+              onFormulaChange={(formula) => handleInputChange('formula', formula)}
+              onDependenciesChange={(deps) => handleInputChange('dependencies', deps)}
+            />
+          </div>
+        )}
+      </div>
+      
       <div className="border-t border-border pt-6">
         <h3 className="text-base font-heading font-semibold text-foreground mb-4">
           Validation Rules

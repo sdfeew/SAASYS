@@ -1,6 +1,81 @@
 import { supabase } from '../lib/supabase';
 
+const STORAGE_BUCKET = 'record-attachments';
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+
 export const attachmentService = {
+  // Upload a file and create attachment record
+  async upload(recordId, moduleId, file, tenantId, userId) {
+    try {
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error(`File size exceeds maximum limit of 100MB`);
+      }
+
+      // Generate unique storage path
+      const timestamp = Date.now();
+      const randomStr = Math.random().toString(36).substring(7);
+      const fileName = `${timestamp}-${randomStr}-${file.name}`;
+      const storagePath = `${tenantId}/${moduleId}/${recordId}/${fileName}`;
+
+      // Upload to storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(storagePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Create attachment record in database
+      const { data, error } = await supabase
+        .from('attachments')
+        .insert({
+          record_id: recordId,
+          module_id: moduleId,
+          tenant_id: tenantId,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+          storage_path: storagePath,
+          uploaded_by: userId
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        ...data,
+        url: this.getPublicUrl(storagePath)
+      };
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  },
+
+  // Get public URL for a file
+  getPublicUrl(storagePath) {
+    const { data } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(storagePath);
+    return data?.publicUrl;
+  },
+
+  // Get signed URL for download (more secure)
+  async getDownloadUrl(storagePath) {
+    try {
+      const { data, error } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .createSignedUrl(storagePath, 3600); // Valid for 1 hour
+
+      if (error) throw error;
+      return data?.signedUrl;
+    } catch (error) {
+      console.error('Error getting download URL:', error);
+      throw error;
+    }
+  },
+
+  // Legacy method for compatibility
   async getByRecord(recordId) {
     const { data, error } = await supabase
       ?.from('attachments')
@@ -10,6 +85,47 @@ export const attachmentService = {
     
     if (error) throw error;
     return data;
+  },
+
+  // Get all attachments for a record with user info
+  async getByRecordAdvanced(recordId, tenantId) {
+    try {
+      // Fetch attachments
+      const { data, error } = await supabase
+        .from('attachments')
+        .select('*')
+        .eq('record_id', recordId)
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Fetch user profiles for each uploader
+      const userIds = [...new Set(data?.map(att => att.uploaded_by) || [])];
+      let userProfiles = {};
+      
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('id, full_name, avatar_url, email')
+          .in('id', userIds);
+        
+        profiles?.forEach(profile => {
+          userProfiles[profile.id] = profile;
+        });
+      }
+
+      // Add user info and signed URLs
+      return Promise.all(data?.map(async (attachment) => ({
+        ...attachment,
+        uploaded_by_user: userProfiles[attachment.uploaded_by] || { id: attachment.uploaded_by },
+        downloadUrl: await this.getDownloadUrl(attachment.storage_path)
+      })) || []);
+    } catch (error) {
+      console.error('Error fetching attachments:', error);
+      // Return empty array instead of throwing to prevent page crash
+      return [];
+    }
   },
 
   async getById(id) {
@@ -130,5 +246,61 @@ export const attachmentService = {
     
     if (error) throw error;
     return data;
+  },
+
+  // Delete an attachment (advanced)
+  async delete(attachmentId, storagePath) {
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([storagePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('record_attachments')
+        .delete()
+        .eq('id', attachmentId);
+
+      if (dbError) throw dbError;
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
+      throw error;
+    }
+  },
+
+  // Get attachment statistics
+  async getStats(recordId, tenantId) {
+    try {
+      const { data, error } = await supabase
+        .from('record_attachments')
+        .select('file_size, file_type')
+        .eq('record_id', recordId)
+        .eq('tenant_id', tenantId);
+
+      if (error) throw error;
+
+      const stats = {
+        totalCount: data?.length || 0,
+        totalSize: data?.reduce((sum, a) => sum + (a.file_size || 0), 0) || 0,
+        byType: {}
+      };
+
+      data?.forEach(attachment => {
+        const type = attachment.file_type || 'unknown';
+        stats.byType[type] = (stats.byType[type] || 0) + 1;
+      });
+
+      return stats;
+    } catch (error) {
+      console.error('Error getting attachment stats:', error);
+      throw error;
+    }
   }
 };
+
+export default attachmentService;

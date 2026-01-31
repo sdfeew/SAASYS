@@ -1,184 +1,229 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Icon from '../../../components/AppIcon';
-import Button from '../../../components/ui/Button';
-import Image from '../../../components/AppImage';
+import { attachmentService } from '../../../services/attachmentService';
 
-const AttachmentsTab = ({ attachments, onUpload, onDelete }) => {
-  const [isDragging, setIsDragging] = useState(false);
+const AttachmentsTab = ({ recordId, moduleId, tenantId, userId, onAttachmentsUpdate, attachments = [] }) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [sortBy, setSortBy] = useState('date');
+  const [filterType, setFilterType] = useState('all');
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const handleDragOver = (e) => {
-    e?.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
   };
 
   const handleDrop = (e) => {
-    e?.preventDefault();
-    setIsDragging(false);
-    const files = Array.from(e?.dataTransfer?.files);
-    if (files?.length > 0) {
-      onUpload(files);
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const files = [...e.dataTransfer.files];
+    handleFiles(files);
+  };
+
+  const handleFiles = async (files) => {
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      for (const file of files) {
+        await attachmentService.upload(recordId, moduleId, file, tenantId, userId);
+      }
+      onAttachmentsUpdate?.();
+    } catch (error) {
+      setUploadError(error.message);
+      console.error('Upload error:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   const handleFileSelect = (e) => {
-    const files = Array.from(e?.target?.files);
-    if (files?.length > 0) {
-      onUpload(files);
+    handleFiles([...e.target.files]);
+  };
+
+  const handleDelete = async (attachmentId, storagePath) => {
+    try {
+      await attachmentService.delete(attachmentId, storagePath);
+      onAttachmentsUpdate?.();
+    } catch (error) {
+      setUploadError(`Failed to delete file: ${error.message}`);
     }
   };
 
-  const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024)?.toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024))?.toFixed(1) + ' MB';
-  };
-
-  const getFileIcon = (type) => {
-    if (type?.startsWith('image/')) return 'Image';
-    if (type?.includes('pdf')) return 'FileText';
-    if (type?.includes('word') || type?.includes('document')) return 'FileText';
-    if (type?.includes('sheet') || type?.includes('excel')) return 'Table';
-    if (type?.includes('zip') || type?.includes('rar')) return 'Archive';
+  const getFileIcon = (fileName) => {
+    const ext = fileName.split('.').pop().toLowerCase();
+    if (['pdf'].includes(ext)) return 'FileText';
+    if (['doc', 'docx', 'txt'].includes(ext)) return 'FileText';
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'Table';
+    if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) return 'Image';
+    if (['mp4', 'avi', 'mov'].includes(ext)) return 'Video';
+    if (['mp3', 'wav', 'flac'].includes(ext)) return 'Music';
+    if (['zip', 'rar', '7z'].includes(ext)) return 'Archive';
     return 'File';
   };
 
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const filteredAttachments = attachments
+    .filter(att => filterType === 'all' || att.file_type.includes(filterType))
+    .sort((a, b) => {
+      if (sortBy === 'date') return new Date(b.created_at) - new Date(a.created_at);
+      if (sortBy === 'name') return a.file_name.localeCompare(b.file_name);
+      if (sortBy === 'size') return b.file_size - a.file_size;
+      return 0;
+    });
+
+  const totalSize = attachments.reduce((sum, att) => sum + (att.file_size || 0), 0);
+
   return (
-    <div className="space-y-4 md:space-y-6">
-      <div
-        className={`border-2 border-dashed rounded-lg p-6 md:p-8 lg:p-12 text-center transition-smooth ${
-          isDragging ? 'border-primary bg-primary/5' : 'border-border bg-muted/30'
-        }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <Icon name="Upload" size={48} className="mx-auto mb-4 text-muted-foreground" />
-        <h3 className="text-lg font-medium text-foreground mb-2">
-          Drag and drop files here
-        </h3>
-        <p className="text-sm text-muted-foreground mb-4">
-          or click to browse from your computer
-        </p>
-        <input
-          type="file"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-          id="file-upload"
-        />
-        <label htmlFor="file-upload">
-          <Button variant="outline" iconName="FolderOpen" iconPosition="left" asChild>
-            <span>Browse Files</span>
-          </Button>
-        </label>
-        <p className="caption text-muted-foreground mt-4">
-          Maximum file size: 10MB. Supported formats: PDF, DOC, XLS, JPG, PNG
-        </p>
+    <div className="space-y-6">
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-muted p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">Total Files</p>
+          <p className="text-2xl font-bold">{attachments.length}</p>
+        </div>
+        <div className="bg-muted p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">Total Size</p>
+          <p className="text-2xl font-bold">{formatFileSize(totalSize)}</p>
+        </div>
+        <div className="bg-muted p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">Last Upload</p>
+          <p className="text-lg font-semibold">
+            {attachments.length > 0 ? formatDate(attachments[0]?.created_at) : 'Never'}
+          </p>
+        </div>
       </div>
-      {attachments?.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="text-base md:text-lg font-medium text-foreground">
-            Uploaded Files ({attachments?.length})
-          </h3>
-          <div className="grid grid-cols-1 gap-3">
-            {attachments?.map((file) => (
-              <div
-                key={file?.id}
-                className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-card border border-border rounded-lg hover:shadow-elevation-1 transition-smooth"
-              >
-                {file?.type?.startsWith('image/') ? (
-                  <div className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 rounded overflow-hidden bg-muted">
-                    <Image
-                      src={file?.url}
-                      alt={file?.alt}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 rounded bg-primary/10 flex items-center justify-center">
-                    <Icon name={getFileIcon(file?.type)} size={24} className="text-primary" />
-                  </div>
-                )}
 
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm md:text-base font-medium text-foreground truncate">
-                    {file?.name}
-                  </h4>
-                  <div className="flex flex-wrap items-center gap-2 md:gap-3 text-xs md:text-sm text-muted-foreground mt-1">
-                    <span className="data-text">{formatFileSize(file?.size)}</span>
-                    <span>•</span>
-                    <span>Uploaded by {file?.uploadedBy}</span>
-                    <span>•</span>
-                    <span>{new Date(file.uploadedAt)?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                  </div>
-                </div>
+      {/* Upload Area */}
+      <div
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition ${
+          dragActive ? 'border-primary bg-primary/5' : 'border-border'
+        }`}>
+        <Icon name="Upload" size={48} className="mx-auto mb-4 text-muted-foreground" />
+        <h3 className="text-lg font-semibold mb-2">Drag files here or click to upload</h3>
+        <p className="text-sm text-muted-foreground mb-4">Maximum file size: 100MB</p>
+        <label className="inline-block">
+          <input
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            disabled={isUploading}
+            className="hidden"
+          />
+          <span className="px-4 py-2 bg-primary text-primary-foreground rounded-lg cursor-pointer hover:bg-primary/90 inline-block">
+            {isUploading ? 'Uploading...' : 'Select Files'}
+          </span>
+        </label>
+      </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    iconName="Download"
-                    onClick={() => window.open(file?.url, '_blank')}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    iconName="Eye"
-                    onClick={() => setSelectedFile(file)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    iconName="Trash2"
-                    onClick={() => onDelete(file?.id)}
-                  />
-                </div>
-              </div>
-            ))}
+      {uploadError && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-lg flex items-start gap-3">
+          <Icon name="AlertCircle" size={20} className="flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">Error</p>
+            <p className="text-sm">{uploadError}</p>
           </div>
         </div>
       )}
-      {selectedFile && (
-        <div
-          className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedFile(null)}
-        >
-          <div
-            className="bg-card rounded-lg shadow-elevation-4 max-w-4xl w-full max-h-[90vh] overflow-auto"
-            onClick={(e) => e?.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="text-lg font-medium text-foreground">{selectedFile?.name}</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                iconName="X"
-                onClick={() => setSelectedFile(null)}
-              />
-            </div>
-            <div className="p-4">
-              {selectedFile?.type?.startsWith('image/') ? (
-                <Image
-                  src={selectedFile?.url}
-                  alt={selectedFile?.alt}
-                  className="w-full h-auto rounded"
-                />
-              ) : (
-                <div className="text-center py-12">
-                  <Icon name={getFileIcon(selectedFile?.type)} size={64} className="mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-4">Preview not available for this file type</p>
-                  <Button variant="outline" iconName="Download" iconPosition="left">
-                    Download File
-                  </Button>
-                </div>
-              )}
-            </div>
+
+      {/* Filters and Sort */}
+      {attachments.length > 0 && (
+        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+          <div className="flex gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm">
+              <option value="date">Sort by Date</option>
+              <option value="name">Sort by Name</option>
+              <option value="size">Sort by Size</option>
+            </select>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm">
+              <option value="all">All Types</option>
+              <option value="image">Images</option>
+              <option value="pdf">PDFs</option>
+              <option value="text">Documents</option>
+              <option value="application">Archives</option>
+            </select>
           </div>
+        </div>
+      )}
+
+      {/* Files List */}
+      {filteredAttachments.length === 0 ? (
+        <div className="text-center py-12">
+          <Icon name="File" size={48} className="mx-auto mb-4 text-muted-foreground opacity-50" />
+          <p className="text-muted-foreground">No attachments yet</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filteredAttachments.map((attachment) => (
+            <div key={attachment.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Icon name={getFileIcon(attachment.file_name)} size={24} className="text-primary flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{attachment.file_name}</p>
+                  <div className="flex gap-2 text-xs text-muted-foreground">
+                    <span>{formatFileSize(attachment.file_size)}</span>
+                    <span>•</span>
+                    <span>{formatDate(attachment.created_at)}</span>
+                    {attachment.uploaded_by_user && (
+                      <>
+                        <span>•</span>
+                        <span>{attachment.uploaded_by_user?.full_name || 'Unknown'}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 ml-4 flex-shrink-0">
+                <a
+                  href={attachment.downloadUrl}
+                  download={attachment.file_name}
+                  className="p-2 rounded-lg hover:bg-muted transition"
+                  title="Download">
+                  <Icon name="Download" size={18} />
+                </a>
+                <button
+                  onClick={() => handleDelete(attachment.id, attachment.storage_path)}
+                  className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition"
+                  title="Delete">
+                  <Icon name="Trash2" size={18} />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

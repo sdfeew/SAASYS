@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 
-const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule }) => {
+const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule, onAddMainModule }) => {
   const [expandedModules, setExpandedModules] = useState(new Set(['hr', 'crm']));
   const [searchQuery, setSearchQuery] = useState('');
+  const [showAddMenu, setShowAddMenu] = useState(false);
 
   // Helper function to safely extract name from JSONB or string
   const extractName = (name) => {
@@ -39,13 +40,49 @@ const ModuleTreePanel = ({ modules, selectedModule, onSelectModule, onAddModule 
       <div className="p-4 border-b border-border">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-heading font-semibold text-foreground">Modules</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            iconName="Plus"
-            onClick={onAddModule}
-            aria-label="Add new module"
-          />
+          <div className="relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              iconName="Plus"
+              onClick={() => setShowAddMenu(!showAddMenu)}
+              aria-label="Add new module"
+            />
+            {showAddMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50">
+                <button
+                  onClick={() => {
+                    onAddMainModule?.();
+                    setShowAddMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-sm text-left text-foreground hover:bg-muted rounded-t-lg transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon name="FolderPlus" size={16} />
+                    <div>
+                      <div className="font-medium">Add Main Module</div>
+                      <div className="caption text-muted-foreground">Create a top-level category</div>
+                    </div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    onAddModule?.();
+                    setShowAddMenu(false);
+                  }}
+                  className="w-full px-4 py-2 text-sm text-left text-foreground hover:bg-muted rounded-b-lg transition-colors border-t border-border"
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon name="Plus" size={16} />
+                    <div>
+                      <div className="font-medium">Add Sub-Module</div>
+                      <div className="caption text-muted-foreground">Add under existing module</div>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="relative">
           <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

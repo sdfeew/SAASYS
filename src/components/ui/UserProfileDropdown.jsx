@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../AppIcon';
+import { useAuth } from '../../contexts/AuthContext';
 
 
 const UserProfileDropdown = ({ user = null }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
   const defaultUser = {
     name: 'Admin User',
@@ -52,11 +55,16 @@ const UserProfileDropdown = ({ user = null }) => {
     setIsOpen(!isOpen);
   };
 
-  const handleMenuClick = (item) => {
+  const handleMenuClick = async (item) => {
     if (item?.action === 'logout') {
-      console.log('Logging out...');
+      try {
+        await signOut();
+        navigate('/auth/login');
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
     } else if (item?.action === 'switchTenant') {
-      console.log('Switching tenant...');
+      navigate('/switch-tenant');
     }
     setIsOpen(false);
   };

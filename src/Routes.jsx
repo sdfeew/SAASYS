@@ -5,10 +5,14 @@ import ErrorBoundary from "components/ErrorBoundary";
 import NotFound from "pages/NotFound";
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DynamicModuleListView from './pages/dynamic-module-list-view';
 import TenantAdminDashboard from './pages/tenant-admin-dashboard';
 import RecordDetailManagement from './pages/record-detail-management';
 import DashboardBuilderStudio from './pages/dashboard-builder-studio';
+import DashboardViewer from './pages/dashboard-viewer';
+import DashboardManagement from './pages/dashboard-management';
 import UserManagementConsole from './pages/user-management-console';
 import SchemaBuilderInterface from './pages/schema-builder-interface';
 import { useAuth } from './contexts/AuthContext';
@@ -37,6 +41,8 @@ const Routes = () => {
           {/* Public Routes */}
           <Route path="/auth/login" element={<LoginPage />} />
           <Route path="/auth/register" element={<RegisterPage />} />
+          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
           {/* Protected Routes */}
           <Route
@@ -76,6 +82,22 @@ const Routes = () => {
             element={
               <ProtectedRoute>
                 <DashboardBuilderStudio />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard-viewer"
+            element={
+              <ProtectedRoute>
+                <DashboardViewer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard-management"
+            element={
+              <ProtectedRoute>
+                <DashboardManagement />
               </ProtectedRoute>
             }
           />

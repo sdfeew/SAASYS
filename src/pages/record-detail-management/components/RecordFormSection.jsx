@@ -2,6 +2,7 @@ import React from 'react';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { getLangText } from '../../../utils/languageUtils';
 
 const RecordFormSection = ({ formData, onChange, isEditing, fieldDefinitions }) => {
   const handleInputChange = (fieldName, value) => {
@@ -10,11 +11,15 @@ const RecordFormSection = ({ formData, onChange, isEditing, fieldDefinitions }) 
 
   const renderField = (field) => {
     const value = formData?.[field?.name] || '';
+    const displayLabel = getLangText(field?.label, 'en');
+    const displayPlaceholder = getLangText(field?.placeholder, 'en');
+    const displayDescription = getLangText(field?.description, 'en');
+    const displayOptions = typeof field?.options === 'object' ? getLangText(field?.options, 'en') : field?.options;
 
     if (!isEditing) {
       return (
         <div key={field?.name} className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">{field?.label}</label>
+          <label className="text-sm font-medium text-muted-foreground">{displayLabel}</label>
           <div className="text-base text-foreground">
             {field?.type === 'currency' && '$'}
             {field?.type === 'boolean' ? (value ? 'Yes' : 'No') : value || '—'}
@@ -29,13 +34,13 @@ const RecordFormSection = ({ formData, onChange, isEditing, fieldDefinitions }) 
         return (
           <Input
             key={field?.name}
-            label={field?.label}
+            label={displayLabel}
             type={field?.type}
             value={value}
             onChange={(e) => handleInputChange(field?.name, e?.target?.value)}
-            placeholder={field?.placeholder}
+            placeholder={displayPlaceholder}
             required={field?.required}
-            description={field?.description}
+            description={displayDescription}
           />
         );
 
@@ -43,13 +48,13 @@ const RecordFormSection = ({ formData, onChange, isEditing, fieldDefinitions }) 
         return (
           <Input
             key={field?.name}
-            label={field?.label}
+            label={displayLabel}
             type="number"
             value={value}
             onChange={(e) => handleInputChange(field?.name, e?.target?.value)}
-            placeholder={field?.placeholder}
+            placeholder={displayPlaceholder}
             required={field?.required}
-            description={field?.description}
+            description={displayDescription}
           />
         );
 
@@ -57,12 +62,12 @@ const RecordFormSection = ({ formData, onChange, isEditing, fieldDefinitions }) 
         return (
           <Input
             key={field?.name}
-            label={field?.label}
+            label={displayLabel}
             type={field?.type === 'datetime' ? 'datetime-local' : 'date'}
             value={value}
             onChange={(e) => handleInputChange(field?.name, e?.target?.value)}
             required={field?.required}
-            description={field?.description}
+            description={displayDescription}
           />
         );
 
@@ -70,12 +75,12 @@ const RecordFormSection = ({ formData, onChange, isEditing, fieldDefinitions }) 
         return (
           <Select
             key={field?.name}
-            label={field?.label}
-            options={field?.options}
+            label={displayLabel}
+            options={displayOptions}
             value={value}
             onChange={(val) => handleInputChange(field?.name, val)}
             required={field?.required}
-            description={field?.description}
+            description={displayDescription}
           />
         );
 
@@ -83,10 +88,10 @@ const RecordFormSection = ({ formData, onChange, isEditing, fieldDefinitions }) 
         return (
           <Checkbox
             key={field?.name}
-            label={field?.label}
+            label={displayLabel}
             checked={value}
             onChange={(e) => handleInputChange(field?.name, e?.target?.checked)}
-            description={field?.description}
+            description={displayDescription}
           />
         );
 

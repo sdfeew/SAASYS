@@ -61,30 +61,53 @@ module.exports = {
         xl: 'var(--radius-xl)', // 18px
       },
       fontFamily: {
-        heading: ['Crimson Pro', 'Georgia', 'serif'],
-        body: ['Source Sans 3', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
-        caption: ['Inter Tight', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        heading: ['Poppins', 'sans-serif'],
+        body: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        caption: ['Inter', 'sans-serif'],
+        mono: ['Fira Code', 'monospace'],
       },
       spacing: {
         '18': '4.5rem',
         '88': '22rem',
       },
       transitionDuration: {
+        '150': '150ms',
         '250': '250ms',
+        '400': '400ms',
       },
       transitionTimingFunction: {
         'smooth': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
         'bounce-subtle': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'ease-in-out': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
       keyframes: {
         shimmer: {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' },
         },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideInUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideInDown: {
+          '0%': { transform: 'translateY(-10px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        pulse: {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.5' },
+        },
       },
       animation: {
         shimmer: 'shimmer 2s infinite linear',
+        fadeIn: 'fadeIn 300ms ease-in-out',
+        slideInUp: 'slideInUp 400ms ease-in-out',
+        slideInDown: 'slideInDown 400ms ease-in-out',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },

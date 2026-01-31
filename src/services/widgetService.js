@@ -88,6 +88,65 @@ export const widgetService = {
     if (error) throw error;
   },
 
+  async getWidgetData(widgetId, filters = {}) {
+    try {
+      // Get widget configuration
+      const widget = await this.getById(widgetId);
+      if (!widget) throw new Error('Widget not found');
+
+      // Get data source
+      const dataSource = widget?.data_source;
+      if (!dataSource) {
+        return null; // No data source configured
+      }
+
+      // Fetch data from the configured data source table
+      let query = supabase
+        ?.from(dataSource?.table_name)
+        ?.select('*');
+
+      // Apply filters
+      Object?.keys(filters)?.forEach(fieldName => {
+        const filterValue = filters?.[fieldName];
+        if (filterValue) {
+          query = query?.eq(fieldName, filterValue);
+        }
+      });
+
+      const { data, error } = await query;
+      
+      if (error) throw error;
+
+      // Format data based on widget type
+      if (widget?.type === 'metric') {
+        // For metric widgets, calculate aggregation
+        const metricField = widget?.metric_fields?.[0];
+        if (metricField && data?.length > 0) {
+          const values = data?.map(row => Number(row?.[metricField]));
+          return {
+            value: values?.reduce((a, b) => a + b, 0)
+          };
+        }
+      } else if (widget?.type === 'table') {
+        // For table widgets, return rows
+        return {
+          headers: Object?.keys(data?.[0] || {}),
+          rows: data?.map(row => Object?.values(row))
+        };
+      } else if (widget?.type === 'chart') {
+        // For chart widgets, return data points
+        return {
+          dataPoints: data?.length
+        };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching widget data:', error);
+      throw error;
+    }
+  },
+
   async reorder(widgets) {
     const updates = widgets.map(widget => ({
       id: widget.id,

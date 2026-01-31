@@ -47,12 +47,17 @@ const Select = React.forwardRef(({
         if (multiple) {
             const selectedOptions = options?.filter(opt => value?.includes(opt?.value));
             if (selectedOptions?.length === 0) return placeholder;
-            if (selectedOptions?.length === 1) return selectedOptions?.[0]?.label;
+            if (selectedOptions?.length === 1) {
+                const label = selectedOptions?.[0]?.label;
+                return typeof label === 'string' ? label : String(label || selectedOptions?.[0]?.value);
+            }
             return `${selectedOptions?.length} items selected`;
         }
 
         const selectedOption = options?.find(opt => opt?.value === value);
-        return selectedOption ? selectedOption?.label : placeholder;
+        if (!selectedOption) return placeholder;
+        const label = selectedOption?.label;
+        return typeof label === 'string' ? label : String(label || selectedOption?.value);
     };
 
     const handleToggle = () => {
@@ -164,11 +169,14 @@ const Select = React.forwardRef(({
                     required={required}
                 >
                     <option value="">Select...</option>
-                    {options?.map(option => (
-                        <option key={option?.value} value={option?.value}>
-                            {option?.label}
-                        </option>
-                    ))}
+                    {options?.map(option => {
+                        const label = typeof option?.label === 'string' ? option?.label : String(option?.label || option?.value);
+                        return (
+                          <option key={option?.value} value={option?.value}>
+                              {label}
+                          </option>
+                        );
+                    })}
                 </select>
 
                 {/* Dropdown */}
@@ -204,7 +212,7 @@ const Select = React.forwardRef(({
                                         )}
                                         onClick={() => !option?.disabled && handleOptionSelect(option)}
                                     >
-                                        <span className="flex-1">{option?.label}</span>
+                                        <span className="flex-1">{typeof option?.label === 'string' ? option?.label : String(option?.label || option?.value)}</span>
                                         {multiple && isSelected(option?.value) && (
                                             <Check className="h-4 w-4" />
                                         )}

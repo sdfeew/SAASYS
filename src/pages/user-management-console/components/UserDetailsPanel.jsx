@@ -3,9 +3,12 @@ import Icon from '../../../components/AppIcon';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import { Checkbox } from '../../../components/ui/Checkbox';
+import { userService } from '../../../services/userService';
 
 const UserDetailsPanel = ({ user, onClose, onSave }) => {
   const [activeTab, setActiveTab] = useState('profile');
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: user?.name,
     email: user?.email,
@@ -53,8 +56,35 @@ const UserDetailsPanel = ({ user, onClose, onSave }) => {
     });
   };
 
-  const handleSave = () => {
-    onSave({ ...user, ...formData, permissions });
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setErrors({});
+      
+      if (!formData?.name?.trim()) {
+        setErrors({ name: 'Name is required' });
+        return;
+      }
+      
+      const updatedUser = { 
+        ...user, 
+        ...formData, 
+        permissions 
+      };
+      
+      await userService?.update(user?.id, updatedUser);
+      
+      if (onSave) {
+        onSave(updatedUser);
+      }
+      
+      onClose();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      setErrors({ submit: error?.message || 'Failed to save user' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const formatTimestamp = (date) => {
@@ -238,12 +268,22 @@ const UserDetailsPanel = ({ user, onClose, onSave }) => {
         </div>
 
         <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancel
           </Button>
-          <Button variant="default" onClick={handleSave} iconName="Save" iconPosition="left" iconSize={16}>
-            Save Changes
+          <Button 
+            variant="default" 
+            onClick={handleSave} 
+            iconName={saving ? "Loader2" : "Save"}
+            iconPosition="left" 
+            iconSize={16}
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
           </Button>
+          {errors?.submit && (
+            <div className="text-sm text-destructive ml-4">{errors?.submit}</div>
+          )}
         </div>
       </div>
     </div>

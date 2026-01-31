@@ -4,7 +4,8 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 
-const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null, mainModules = [] }) => {
+const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null, mainModules = [], isMainModule = false }) => {
+  const [moduleType, setModuleType] = useState(isMainModule ? 'main' : 'sub'); // Track which type we're creating
   const [formData, setFormData] = useState(module || {
     name: '',
     code: '',
@@ -66,6 +67,19 @@ const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null, main
 
         <div className="flex-1 overflow-y-auto scrollbar-custom p-4 md:p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {!module && (
+              <Select
+                label="Module Type"
+                options={[
+                  { value: 'main', label: 'Main Module (Top-level category)' },
+                  { value: 'sub', label: 'Sub-Module (Under a main module)' }
+                ]}
+                value={moduleType}
+                onChange={setModuleType}
+                description="Choose whether to create a main module or sub-module"
+              />
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               <Input
                 label="Module Name"
@@ -104,14 +118,16 @@ const ModuleConfigurationModal = ({ isOpen, onClose, onSave, module = null, main
                 onChange={(value) => handleInputChange('icon', value)}
                 description="Visual icon for the module"
               />
-              <Select
-                label="Parent Module"
-                options={parentModuleOptions}
-                value={formData?.mainModuleId}
-                onChange={(value) => handleInputChange('mainModuleId', value)}
-                description="Select a parent module"
-                required
-              />
+              {(moduleType === 'sub' || module) && (
+                <Select
+                  label="Parent Module"
+                  options={parentModuleOptions}
+                  value={formData?.mainModuleId}
+                  onChange={(value) => handleInputChange('mainModuleId', value)}
+                  description="Select a parent module"
+                  required={moduleType === 'sub'}
+                />
+              )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border">

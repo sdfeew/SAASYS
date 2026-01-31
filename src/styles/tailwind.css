@@ -1,7 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -9,27 +8,27 @@
 
 @layer base {
   :root {
-    /* Primary Colors */
-    --color-primary: #0F766E; /* teal-700 */
+    /* Primary Colors - Modern Blue */
+    --color-primary: #2563EB; /* blue-600 */
     --color-primary-foreground: #FFFFFF; /* white */
     
     /* Secondary Colors */
-    --color-secondary: #475569; /* slate-600 */
+    --color-secondary: #6366F1; /* indigo-500 */
     --color-secondary-foreground: #FFFFFF; /* white */
     
     /* Accent Colors */
-    --color-accent: #F59E0B; /* amber-500 */
-    --color-accent-foreground: #1F2937; /* gray-800 */
+    --color-accent: #EC4899; /* pink-500 */
+    --color-accent-foreground: #FFFFFF; /* white */
     
     /* Background Colors */
-    --color-background: #FEFEFE; /* warm-white */
-    --color-foreground: #1E293B; /* slate-800 */
+    --color-background: #FAFBFC; /* off-white */
+    --color-foreground: #0F172A; /* slate-900 */
     
     /* Surface Colors */
-    --color-card: #F8FAFC; /* slate-50 */
-    --color-card-foreground: #334155; /* slate-700 */
+    --color-card: #FFFFFF; /* pure white */
+    --color-card-foreground: #1E293B; /* slate-800 */
     --color-popover: #FFFFFF; /* white */
-    --color-popover-foreground: #1E293B; /* slate-800 */
+    --color-popover-foreground: #0F172A; /* slate-900 */
     
     /* Muted Colors */
     --color-muted: #F1F5F9; /* slate-100 */
@@ -37,43 +36,43 @@
     
     /* Border & Input */
     --color-border: #E2E8F0; /* slate-200 */
-    --color-input: #E2E8F0; /* slate-200 */
-    --color-ring: #0F766E; /* teal-700 */
+    --color-input: #F8FAFC; /* slate-50 */
+    --color-ring: #2563EB; /* blue-600 */
     
     /* State Colors */
-    --color-success: #059669; /* emerald-600 */
+    --color-success: #10B981; /* emerald-500 */
     --color-success-foreground: #FFFFFF; /* white */
-    --color-warning: #D97706; /* amber-600 */
+    --color-warning: #F59E0B; /* amber-500 */
     --color-warning-foreground: #FFFFFF; /* white */
-    --color-error: #DC2626; /* red-600 */
+    --color-error: #EF4444; /* red-500 */
     --color-error-foreground: #FFFFFF; /* white */
-    --color-destructive: #DC2626; /* red-600 */
+    --color-destructive: #EF4444; /* red-500 */
     --color-destructive-foreground: #FFFFFF; /* white */
     
     /* Radius */
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-lg: 14px;
-    --radius-xl: 18px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
     
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.08);
-    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08);
-    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.12);
-    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.16);
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 24px -4px rgba(15, 23, 42, 0.12);
+    --shadow-xl: 0 20px 32px -8px rgba(15, 23, 42, 0.16);
   }
 
   .dark {
     /* Primary Colors */
-    --color-primary: #14B8A6; /* teal-500 */
+    --color-primary: #3B82F6; /* blue-500 */
     --color-primary-foreground: #0F172A; /* slate-900 */
     
     /* Secondary Colors */
-    --color-secondary: #64748B; /* slate-500 */
-    --color-secondary-foreground: #F1F5F9; /* slate-100 */
+    --color-secondary: #818CF8; /* indigo-400 */
+    --color-secondary-foreground: #0F172A; /* slate-900 */
     
     /* Accent Colors */
-    --color-accent: #FBBF24; /* amber-400 */
+    --color-accent: #F472B6; /* pink-400 */
     --color-accent-foreground: #0F172A; /* slate-900 */
     
     /* Background Colors */
@@ -91,25 +90,25 @@
     --color-muted-foreground: #94A3B8; /* slate-400 */
     
     /* Border & Input */
-    --color-border: #334155; /* slate-700 */
-    --color-input: #334155; /* slate-700 */
-    --color-ring: #14B8A6; /* teal-500 */
+    --color-border: #475569; /* slate-600 */
+    --color-input: #0F172A; /* slate-900 */
+    --color-ring: #3B82F6; /* blue-500 */
     
     /* State Colors */
-    --color-success: #10B981; /* emerald-500 */
+    --color-success: #34D399; /* emerald-400 */
     --color-success-foreground: #0F172A; /* slate-900 */
-    --color-warning: #F59E0B; /* amber-500 */
+    --color-warning: #FBBF24; /* amber-400 */
     --color-warning-foreground: #0F172A; /* slate-900 */
-    --color-error: #EF4444; /* red-500 */
-    --color-error-foreground: #FFFFFF; /* white */
-    --color-destructive: #EF4444; /* red-500 */
-    --color-destructive-foreground: #FFFFFF; /* white */
+    --color-error: #F87171; /* red-400 */
+    --color-error-foreground: #0F172A; /* slate-900 */
+    --color-destructive: #F87171; /* red-400 */
+    --color-destructive-foreground: #0F172A; /* slate-900 */
     
     /* Shadows - Glow effects for dark mode */
-    --shadow-sm: 0 0 8px 0 rgba(20, 184, 166, 0.1);
-    --shadow-md: 0 0 12px 0 rgba(20, 184, 166, 0.12);
-    --shadow-lg: 0 0 16px 0 rgba(20, 184, 166, 0.14);
-    --shadow-xl: 0 0 24px 0 rgba(20, 184, 166, 0.16);
+    --shadow-sm: 0 0 8px 0 rgba(59, 130, 246, 0.1);
+    --shadow-md: 0 0 12px 0 rgba(59, 130, 246, 0.12);
+    --shadow-lg: 0 0 16px 0 rgba(59, 130, 246, 0.14);
+    --shadow-xl: 0 0 24px 0 rgba(59, 130, 246, 0.16);
   }
 
   * {
@@ -118,34 +117,40 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 16px;
-    line-height: 1.6;
+    line-height: 1.5;
+    letter-spacing: -0.25px;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Crimson Pro', Georgia, serif;
-    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.5px;
   }
 
   h1 {
-    font-size: 2.25rem;
-    line-height: 1.2;
+    font-size: 2.5rem;
+    line-height: 1.1;
+    font-weight: 800;
   }
 
   h2 {
-    font-size: 1.875rem;
-    line-height: 1.25;
+    font-size: 2rem;
+    line-height: 1.15;
+    font-weight: 700;
   }
 
   h3 {
     font-size: 1.5rem;
-    line-height: 1.3;
+    line-height: 1.25;
+    font-weight: 700;
   }
 
   h4 {
     font-size: 1.25rem;
-    line-height: 1.4;
+    line-height: 1.35;
+    font-weight: 600;
   }
 
   h5 {
@@ -198,6 +203,14 @@
     transition: all 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
 
+  .transition-fast {
+    transition: all 150ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .transition-slow {
+    transition: all 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
   .shadow-elevation-1 {
     box-shadow: var(--shadow-sm);
   }
@@ -214,23 +227,97 @@
     box-shadow: var(--shadow-xl);
   }
 
+  /* Enhanced scrollbar styling */
   .scrollbar-custom::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
 
   .scrollbar-custom::-webkit-scrollbar-track {
-    @apply bg-muted rounded-full;
+    @apply bg-transparent;
   }
-.scrollbar-custom::-webkit-scrollbar-thumb  {
-    @apply rounded-full;
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full transition-smooth;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
   }
 
   .text-balance {
     text-wrap: balance;
   }
 
-  .measure {
-    max-width: 70ch;
+  /* Button enhancements */
+  .btn-base {
+    @apply font-medium rounded-lg transition-smooth shadow-elevation-1 hover:shadow-elevation-2;
+  }
+
+  /* Focus ring enhancement */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary;
+  }
+
+  .focus-ring-dark {
+    @apply dark:focus:ring-offset-slate-900;
+  }
+
+  /* Smooth gradients */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary to-secondary;
+  }
+
+  .gradient-accent {
+    @apply bg-gradient-to-r from-accent to-pink-600;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    @apply backdrop-blur-md bg-white/10 border border-white/20 rounded-lg;
+  }
+
+  .glass-dark {
+    @apply dark:bg-slate-900/50 dark:border-slate-700/50;
+  }
+
+  /* Better spacing helpers */
+  .gap-micro {
+    @apply gap-1;
+  }
+
+  .gap-tiny {
+    @apply gap-2;
+  }
+
+  .gap-small {
+    @apply gap-3;
+  }
+
+  .gap-medium {
+    @apply gap-4;
+  }
+
+  .gap-large {
+    @apply gap-6;
+  }
+
+  /* Text truncation helpers */
+  .line-clamp-1 {
+    @apply overflow-hidden truncate;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }

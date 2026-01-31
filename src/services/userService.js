@@ -1,8 +1,15 @@
 import { supabase } from '../lib/supabase';
 
 export const userService = {
-  async getAll() {
-    const { data, error } = await supabase?.from('user_profiles')?.select('*')?.order('created_at', { ascending: false });
+  async getAll(tenantId = null) {
+    let query = supabase?.from('user_profiles')?.select('*');
+    
+    // Filter by tenant if provided (IMPORTANT: Security requirement)
+    if (tenantId) {
+      query = query?.eq('tenant_id', tenantId);
+    }
+    
+    const { data, error } = await query?.order('created_at', { ascending: false });
     
     if (error) throw error;
     

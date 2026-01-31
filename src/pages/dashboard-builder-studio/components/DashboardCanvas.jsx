@@ -1,9 +1,97 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import WidgetPreview from './WidgetPreview';
+import BarChartWidget from './widgets/BarChartWidget';
+import LineChartWidget from './widgets/LineChartWidget';
+import PieChartWidget from './widgets/PieChartWidget';
+import TableWidget from './widgets/TableWidget';
+import MetricWidget from './widgets/MetricWidget';
+import AreaChartWidget from './widgets/AreaChartWidget';
+import ScatterChartWidget from './widgets/ScatterChartWidget';
+import GaugeWidget from './widgets/GaugeWidget';
+import { widgetDataFetcher } from '../services/widgetDataFetcher';
+import { useAuth } from '../../../contexts/AuthContext';
 
-const DashboardCanvas = ({ widgets, onWidgetUpdate, onWidgetDelete, onWidgetSelect, selectedWidget }) => {
+const DashboardCanvas = ({ widgets, onWidgetUpdate, onWidgetDelete, onWidgetSelect, selectedWidget, filters }) => {
+  const { tenantId } = useAuth();
+  const [widgetData, setWidgetData] = useState({});
+  const [loadingWidgets, setLoadingWidgets] = useState({});
+  const [errorWidgets, setErrorWidgets] = useState({});
   const [isDraggingOver, setIsDraggingOver] = useState(false);
+
+  // Fetch data for each widget
+  useEffect(() => {
+    if (!widgets || widgets.length === 0) return;
+
+    const fetchAllWidgetData = async () => {
+      const newWidgetData = {};
+      const newLoadingWidgets = {};
+      const newErrorWidgets = {};
+
+      for (const widget of widgets) {
+        if (!widget.dataSource?.moduleId) continue;
+
+        newLoadingWidgets[widget.id] = true;
+        
+        try {
+          const data = await widgetDataFetcher.fetchWidgetData(
+            widget,
+            tenantId,
+            filters
+          );
+          
+          const formattedData = widgetDataFetcher.formatForWidget(data, widget);
+          newWidgetData[widget.id] = formattedData;
+          newLoadingWidgets[widget.id] = false;
+        } catch (error) {
+          console.error(`Error fetching data for widget ${widget.id}:`, error);
+          newErrorWidgets[widget.id] = error.message || 'Failed to load data';
+          newLoadingWidgets[widget.id] = false;
+        }
+      }
+
+      setWidgetData(newWidgetData);
+      setLoadingWidgets(newLoadingWidgets);
+      setErrorWidgets(newErrorWidgets);
+    };
+
+    fetchAllWidgetData();
+  }, [widgets, tenantId, filters]);
+
+  const renderWidget = (widget) => {
+    const data = widgetData[widget.id] || [];
+    const loading = loadingWidgets[widget.id] || false;
+    const error = errorWidgets[widget.id];
+
+    const commonProps = {
+      widget,
+      data,
+      loading,
+      error,
+      filters: filters || {}
+    };
+
+    switch (widget.type) {
+      case 'bar':
+        return <BarChartWidget {...commonProps} />;
+      case 'line':
+        return <LineChartWidget {...commonProps} />;
+      case 'area':
+        return <AreaChartWidget {...commonProps} />;
+      case 'pie':
+        return <PieChartWidget {...commonProps} />;
+      case 'scatter':
+        return <ScatterChartWidget {...commonProps} />;
+      case 'table':
+        return <TableWidget {...commonProps} />;
+      case 'metric':
+        return <MetricWidget {...commonProps} />;
+      case 'gauge':
+        return <GaugeWidget {...commonProps} />;
+      default:
+        return <WidgetPreview widget={widget} />;
+    }
+  };
 
   const handleDragOver = (e) => {
     e?.preventDefault();
@@ -115,7 +203,13 @@ const DashboardCanvas = ({ widgets, onWidgetUpdate, onWidgetDelete, onWidgetSele
                   </div>
                 </div>
                 <div className="p-4">
-                  <WidgetPreview widget={widget} />
+                  {widget.dataSource?.moduleId ? (
+                    <div style={{ height: '250px' }}>
+                      {renderWidget(widget)}
+                    </div>
+                  ) : (
+                    <WidgetPreview widget={widget} />
+                  )}
                 </div>
               </div>
             ))}
