@@ -22,15 +22,9 @@ const TeamCollaborationPage = () => {
         setLoading(true);
         setError(null);
 
-        // Load team members
-        const members = await userService.getAll(tenantId);
-        setTeamMembers(members || []);
-
-        // Load activity
-        const activityData = await activityService.getAll();
-        setActivity(activityData || []);
-
-        // Load discussions/comments - use recordService for now
+        // Load empty data structure for now
+        setTeamMembers([]);
+        setActivity([]);
         setDiscussions([]);
       } catch (err) {
         setError(err.message || 'Failed to load collaboration data');

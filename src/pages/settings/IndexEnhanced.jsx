@@ -45,27 +45,22 @@ const SettingsPage = () => {
         setLoading(true);
         setError(null);
 
-        // Load user profile
-        const userProfile = await userService.getUserProfile(user.id);
-        if (userProfile) {
+        // Load user profile from form state
+        if (user) {
           setFormData({
-            fullName: userProfile.full_name || '',
-            email: userProfile.email || user.email,
-            phone: userProfile.phone || '',
-            avatar: userProfile.avatar_url || '',
-            bio: userProfile.bio || ''
+            fullName: user.user_metadata?.full_name || '',
+            email: user.email || '',
+            phone: user.user_metadata?.phone || '',
+            avatar: user.user_metadata?.avatar_url || '',
+            bio: user.user_metadata?.bio || ''
           });
         }
 
-        // Load notification preferences
-        const prefs = await advancedNotificationService.getNotificationPreferences(user.id);
-        setNotificationPrefs(prefs);
-
-        // Load theme preference
+        // Load theme preference from localStorage
         const savedTheme = localStorage.getItem('theme') || 'light';
         setTheme(savedTheme);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to load settings');
       } finally {
         setLoading(false);
       }
