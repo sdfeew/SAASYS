@@ -8,38 +8,7 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 const BackupManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [backups, setBackups] = useState([
-    {
-      id: 'backup_1704067200000',
-      name: 'Daily Backup - Jan 1, 2024',
-      type: 'full',
-      status: 'completed',
-      size: 52428800,
-      recordCount: 1248,
-      startedAt: new Date(Date.now() - 86400000),
-      completedAt: new Date(Date.now() - 86340000)
-    },
-    {
-      id: 'backup_1703980800000',
-      name: 'Daily Backup - Dec 31, 2023',
-      type: 'incremental',
-      status: 'completed',
-      size: 5242880,
-      recordCount: 48,
-      startedAt: new Date(Date.now() - 172800000),
-      completedAt: new Date(Date.now() - 172760000)
-    },
-    {
-      id: 'backup_1703894400000',
-      name: 'Weekly Backup - Dec 24, 2023',
-      type: 'full',
-      status: 'completed',
-      size: 48234496,
-      recordCount: 1200,
-      startedAt: new Date(Date.now() - 259200000),
-      completedAt: new Date(Date.now() - 259140000)
-    }
-  ]);
+  const [backups, setBackups] = useState([]);
   const [scheduleSettings, setScheduleSettings] = useState({
     enabled: true,
     frequency: 'daily',
@@ -60,8 +29,10 @@ const BackupManagementPage = () => {
         setLoading(true);
         setError(null);
         // Load backups from service
+        const backupsData = await backupService.getBackups();
+        setBackups(backupsData || []);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to load backups');
       } finally {
         setLoading(false);
       }

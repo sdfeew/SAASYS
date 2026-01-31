@@ -3,94 +3,49 @@ import { Users, Send, Heart, Reply, Trash2, Edit } from 'lucide-react';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorAlert from '../../components/ui/ErrorAlert';
 import { useAuth } from '../../contexts/AuthContext';
+import { userService } from '../../services/userService';
+import { commentService } from '../../services/commentService';
+import { activityService } from '../../services/activityService';
 
 const TeamCollaborationPage = () => {
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const { user, tenantId } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [teamMembers, setTeamMembers] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john@example.com',
-      role: 'Admin',
-      avatar: '👤',
-      status: 'online',
-      joinedDate: '2024-01-15'
-    },
-    {
-      id: 2,
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      role: 'Manager',
-      avatar: '👤',
-      status: 'online',
-      joinedDate: '2024-01-20'
-    },
-    {
-      id: 3,
-      name: 'Bob Johnson',
-      email: 'bob@example.com',
-      role: 'User',
-      avatar: '👤',
-      status: 'idle',
-      joinedDate: '2024-02-01'
-    }
-  ]);
-  const [activity, setActivity] = useState([
-    {
-      id: 1,
-      user: 'John Doe',
-      action: 'updated',
-      item: 'Customer Database',
-      timestamp: new Date(Date.now() - 3600000),
-      icon: '📝'
-    },
-    {
-      id: 2,
-      user: 'Jane Smith',
-      action: 'created',
-      item: 'Q1 Report',
-      timestamp: new Date(Date.now() - 7200000),
-      icon: '📄'
-    },
-    {
-      id: 3,
-      user: 'Bob Johnson',
-      action: 'commented on',
-      item: 'Marketing Plan',
-      timestamp: new Date(Date.now() - 14400000),
-      icon: '💬'
-    }
-  ]);
-  const [discussions, setDiscussions] = useState([
-    {
-      id: 1,
-      title: 'Best practices for data entry',
-      author: 'John Doe',
-      authorRole: 'Admin',
-      avatar: '👤',
-      replies: 5,
-      views: 23,
-      created: new Date(Date.now() - 86400000),
-      lastReply: new Date(Date.now() - 3600000),
-      pinned: true
-    },
-    {
-      id: 2,
-      title: 'How to optimize dashboards',
-      author: 'Jane Smith',
-      authorRole: 'Manager',
-      avatar: '👤',
-      replies: 3,
-      views: 12,
-      created: new Date(Date.now() - 172800000),
-      lastReply: new Date(Date.now() - 7200000),
-      pinned: false
-    }
-  ]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [discussions, setDiscussions] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedDiscussion, setSelectedDiscussion] = useState(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Load team members
+        const members = await userService.getTeamMembers(tenantId);
+        setTeamMembers(members || []);
+
+        // Load activity
+        const activityData = await activityService.getRecentActivity(tenantId);
+        setActivity(activityData || []);
+
+        // Load discussions/comments
+        const discussionData = await commentService.getDiscussions(tenantId);
+        setDiscussions(discussionData || []);
+      } catch (err) {
+        setError(err.message || 'Failed to load collaboration data');
+        console.error('Error loading collaboration data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (tenantId) {
+      loadData();
+    }
+  }, [tenantId]);
 
   const sendMessage = () => {
     if (newMessage.trim()) {

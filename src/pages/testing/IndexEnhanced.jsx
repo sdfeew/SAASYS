@@ -1,101 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bug, Play, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import Modal from '../../components/ui/Modal';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import ErrorAlert from '../../components/ui/ErrorAlert';
 
 const TestingPage = () => {
-  const [testSuites, setTestSuites] = useState([
-    {
-      id: 1,
-      name: 'Authentication Tests',
-      tests: 12,
-      passed: 12,
-      failed: 0,
-      skipped: 0,
-      duration: 2.5,
-      status: 'passed',
-      lastRun: new Date(Date.now() - 3600000)
-    },
-    {
-      id: 2,
-      name: 'Module CRUD Operations',
-      tests: 28,
-      passed: 27,
-      failed: 1,
-      skipped: 0,
-      duration: 5.2,
-      status: 'failed',
-      lastRun: new Date(Date.now() - 7200000)
-    },
-    {
-      id: 3,
-      name: 'Record Management',
-      tests: 35,
-      passed: 35,
-      failed: 0,
-      skipped: 0,
-      duration: 7.1,
-      status: 'passed',
-      lastRun: new Date(Date.now() - 10800000)
-    },
-    {
-      id: 4,
-      name: 'Dashboard Builder',
-      tests: 18,
-      passed: 18,
-      failed: 0,
-      skipped: 0,
-      duration: 4.3,
-      status: 'passed',
-      lastRun: new Date(Date.now() - 14400000)
-    },
-    {
-      id: 5,
-      name: 'Workflow Execution',
-      tests: 22,
-      passed: 20,
-      failed: 2,
-      skipped: 0,
-      duration: 6.7,
-      status: 'failed',
-      lastRun: new Date(Date.now() - 18000000)
-    }
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [testSuites, setTestSuites] = useState([]);
   const [selectedTest, setSelectedTest] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  const testDetails = {
-    1: [
-      { name: 'Login with valid credentials', status: 'passed', duration: 0.2 },
-      { name: 'Login with invalid credentials', status: 'passed', duration: 0.15 },
-      { name: 'Register new user', status: 'passed', duration: 0.25 },
-      { name: 'Password reset flow', status: 'passed', duration: 0.3 },
-      { name: 'Email verification', status: 'passed', duration: 0.2 },
-      { name: 'Two-factor authentication', status: 'passed', duration: 0.35 }
-    ],
-    2: [
-      { name: 'Create module', status: 'passed', duration: 0.3 },
-      { name: 'Update module', status: 'passed', duration: 0.25 },
-      { name: 'Delete module', status: 'passed', duration: 0.2 },
-      { name: 'Module field validation', status: 'failed', duration: 0.5, error: 'Custom field validation failed' },
-      { name: 'Module permissions', status: 'passed', duration: 0.3 }
-    ]
-  };
+  useEffect(() => {
+    const loadTests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Load test results from service or CI/CD provider
+        // For now, we'll display a message that tests can be run manually
+        setTestSuites([]);
+      } catch (err) {
+        setError(err.message || 'Failed to load tests');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTests();
+  }, []);
 
   const handleRunTest = async (testId) => {
-    // Simulate running test
-    setTestSuites(testSuites.map(t =>
-      t.id === testId
-        ? { ...t, status: 'running', lastRun: new Date() }
-        : t
-    ));
-
-    setTimeout(() => {
-      setTestSuites(testSuites.map(t =>
-        t.id === testId
-          ? { ...t, status: 'passed' }
-          : t
-      ));
-    }, 2000);
+    // Implement actual test running
   };
 
   const formatTime = (date) => {

@@ -9,57 +9,8 @@ import ConfirmDialog from '../../components/ui/ConfirmDialog';
 const IntegrationsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [integrations, setIntegrations] = useState([
-    {
-      id: 1,
-      name: 'Slack Integration',
-      type: 'slack',
-      status: 'connected',
-      icon: '💬',
-      connected: true,
-      lastSync: new Date(Date.now() - 3600000)
-    },
-    {
-      id: 2,
-      name: 'Google Sheets',
-      type: 'google_sheets',
-      status: 'connected',
-      icon: '📊',
-      connected: true,
-      lastSync: new Date(Date.now() - 7200000)
-    },
-    {
-      id: 3,
-      name: 'Webhook Integration',
-      type: 'webhook',
-      status: 'pending',
-      icon: '🔗',
-      connected: false,
-      lastSync: null
-    }
-  ]);
-  const [webhooks, setWebhooks] = useState([
-    {
-      id: 1,
-      integrationId: 1,
-      event: 'record.created',
-      url: 'https://api.example.com/webhook',
-      enabled: true,
-      lastFired: new Date(Date.now() - 1800000),
-      successCount: 145,
-      failureCount: 2
-    },
-    {
-      id: 2,
-      integrationId: 1,
-      event: 'record.updated',
-      url: 'https://api.example.com/webhook',
-      enabled: true,
-      lastFired: new Date(Date.now() - 900000),
-      successCount: 98,
-      failureCount: 1
-    }
-  ]);
+  const [integrations, setIntegrations] = useState([]);
+  const [webhooks, setWebhooks] = useState([]);
   const [showNewIntegration, setShowNewIntegration] = useState(false);
   const [showNewWebhook, setShowNewWebhook] = useState(false);
   const [selectedIntegration, setSelectedIntegration] = useState(null);
@@ -84,8 +35,13 @@ const IntegrationsPage = () => {
         setLoading(true);
         setError(null);
         // Load integrations from service
+        const integrationsData = await apiIntegrationService.getIntegrations();
+        setIntegrations(integrationsData || []);
+        
+        const webhooksData = await apiIntegrationService.getWebhooks();
+        setWebhooks(webhooksData || []);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to load integrations');
       } finally {
         setLoading(false);
       }
