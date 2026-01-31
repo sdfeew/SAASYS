@@ -7,6 +7,8 @@ import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+import TenantSelectorPage from './pages/auth/TenantSelectorPage';
 import DynamicModuleListView from './pages/dynamic-module-list-view';
 import TenantAdminDashboard from './pages/tenant-admin-dashboard';
 import RecordDetailManagement from './pages/record-detail-management';
@@ -43,6 +45,9 @@ const Routes = () => {
           <Route path="/auth/register" element={<RegisterPage />} />
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/auth/tenant-selector" element={<TenantSelectorPage />} />
+          <Route path="/tenant-selector" element={<TenantSelectorPage />} />
 
           {/* Protected Routes */}
           <Route
