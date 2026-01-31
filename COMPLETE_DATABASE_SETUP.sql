@@ -172,8 +172,8 @@ CREATE TRIGGER update_dashboards_updated_at BEFORE UPDATE ON public.dashboards
 /*
 DO $$
 DECLARE
-  v_tenant_id UUID := 'YOUR_TENANT_ID_HERE';
-  v_module_id UUID := 'YOUR_MODULE_ID_HERE';
+  v_tenant_id UUID := 'e9a58396-5696-42b9-b14b-bad4cedcabaa';
+  v_module_id UUID := '971835d2-8216-4e85-a31d-3d56b1fdd2d9';
 BEGIN
   INSERT INTO public.records (sub_module_id, tenant_id, data, created_by, created_at)
   VALUES

@@ -2,7 +2,7 @@ import React from 'react';
 import Icon from '../../../components/AppIcon';
 import { getLangText } from '../../../utils/languageUtils';
 
-const DashboardTable = ({ dashboards, onView, onEdit, onDuplicate, onDelete, onPublish, onUnpublish, onShare, deleting }) => {
+const DashboardTable = ({ dashboards, onView, onEdit, onEditInBuilder, onDuplicate, onDelete, onPublish, onUnpublish, onShare, deleting }) => {
   const formatDate = (date) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -74,9 +74,16 @@ const DashboardTable = ({ dashboards, onView, onEdit, onDuplicate, onDelete, onP
                         <Icon name="Eye" size={16} className="text-muted-foreground" />
                       </button>
                       <button
+                        onClick={() => onEditInBuilder(dashboard)}
+                        className="p-2 rounded hover:bg-muted transition-colors"
+                        title="Edit in Dashboard Builder"
+                      >
+                        <Icon name="Zap" size={16} className="text-primary" />
+                      </button>
+                      <button
                         onClick={() => onEdit(dashboard)}
                         className="p-2 rounded hover:bg-muted transition-colors"
-                        title="Edit dashboard"
+                        title="Edit dashboard properties"
                       >
                         <Icon name="Edit2" size={16} className="text-muted-foreground" />
                       </button>
@@ -163,11 +170,12 @@ const DashboardTable = ({ dashboards, onView, onEdit, onDuplicate, onDelete, onP
                   View
                 </button>
                 <button
-                  onClick={() => onEdit(dashboard)}
-                  className="flex-1 px-3 py-2 rounded bg-muted hover:bg-muted/80 transition-colors text-sm text-foreground flex items-center justify-center gap-2"
+                  onClick={() => onEditInBuilder(dashboard)}
+                  className="flex-1 px-3 py-2 rounded bg-primary/10 hover:bg-primary/20 transition-colors text-sm text-primary flex items-center justify-center gap-2"
+                  title="Edit in Dashboard Builder"
                 >
-                  <Icon name="Edit2" size={14} />
-                  Edit
+                  <Icon name="Zap" size={14} />
+                  Build
                 </button>
                 <button
                   onClick={() => onShare(dashboard)}

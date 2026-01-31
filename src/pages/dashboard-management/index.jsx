@@ -56,6 +56,11 @@ const DashboardManagement = () => {
     setShowModal(true);
   };
 
+  const handleEditInBuilder = (dashboard) => {
+    // Navigate to Dashboard Builder with the dashboard ID
+    window.location.href = `/dashboard-builder-studio?id=${dashboard.id}`;
+  };
+
   const handleDuplicate = (dashboard) => {
     setSelectedDashboard(dashboard);
     setModalMode('duplicate');
@@ -309,6 +314,7 @@ const DashboardManagement = () => {
               dashboards={filteredDashboards}
               onView={handleView}
               onEdit={handleEdit}
+              onEditInBuilder={handleEditInBuilder}
               onDuplicate={handleDuplicate}
               onDelete={handleDelete}
               onPublish={handlePublish}

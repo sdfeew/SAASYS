@@ -15,6 +15,7 @@ const DashboardBuilderStudioEnhanced = () => {
   const { user, tenantId } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboard, setDashboard] = useState(null);
+  const [dashboards, setDashboards] = useState([]);
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,20 +30,41 @@ const DashboardBuilderStudioEnhanced = () => {
   });
   const [editingWidget, setEditingWidget] = useState(null);
   const [dashboardName, setDashboardName] = useState('');
+  const [currentDashboardId, setCurrentDashboardId] = useState(null);
 
   useEffect(() => {
-    const dashboardId = new URLSearchParams(window.location.search).get('id');
-    if (dashboardId) {
-      loadDashboard(dashboardId);
+    if (tenantId) {
+      loadDashboards();
     }
-  }, []);
+  }, [tenantId]);
+
+  const loadDashboards = async () => {
+    try {
+      setLoading(true);
+      const allDashboards = await dashboardService.getAll(tenantId);
+      setDashboards(allDashboards || []);
+      
+      // Check if there's a dashboard ID in URL
+      const dashboardId = new URLSearchParams(window.location.search).get('id');
+      if (dashboardId) {
+        loadDashboard(dashboardId);
+      } else if (allDashboards && allDashboards.length > 0) {
+        // Load first dashboard if available
+        loadDashboard(allDashboards[0].id);
+      }
+    } catch (err) {
+      errorHandler.logError('DashboardBuilder:loadDashboards', err);
+      setError('Failed to load dashboards');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadDashboard = async (dashboardId) => {
-    setLoading(true);
-    setError(null);
     try {
       const data = await dashboardService.getById(dashboardId);
       setDashboard(data);
+      setCurrentDashboardId(data.id);
       setDashboardName(data.name);
       
       const widgetsData = await widgetService.getByDashboard(dashboardId);
@@ -50,8 +72,6 @@ const DashboardBuilderStudioEnhanced = () => {
     } catch (err) {
       errorHandler.logError('DashboardBuilder:loadDashboard', err);
       setError('Failed to load dashboard');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -63,10 +83,12 @@ const DashboardBuilderStudioEnhanced = () => {
 
     setSaving(true);
     try {
-      const created = await widgetService.create({
-        dashboard_id: dashboard.id,
-        ...newWidget,
-        order: widgets.length + 1
+      const created = await widgetService.create(dashboard.id, {
+        type: newWidget.type,
+        title: newWidget.title,
+        width: newWidget.width,
+        height: newWidget.height,
+        config: newWidget.config
       });
       setWidgets([...widgets, created]);
       setNewWidget({ title: '', type: 'chart', width: 1, height: 1, config: {} });
@@ -120,8 +142,18 @@ const DashboardBuilderStudioEnhanced = () => {
 
   if (!dashboard) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <ErrorAlert error={error} title="Dashboard Not Found" />
+      <div className="flex h-screen bg-slate-50">
+        <AdminSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex items-center justify-center">
+            <EmptyState 
+              icon="BarChart3"
+              title="No Dashboard Selected"
+              description={dashboards.length > 0 ? "Choose a dashboard from the sidebar to edit" : "No dashboards available. Create one first in Dashboard Management."}
+              action={dashboards.length > 0 ? undefined : <Button onClick={() => window.location.href = '/dashboard-management'}>Go to Dashboard Management</Button>}
+            />
+          </div>
+        </div>
       </div>
     );
   }
@@ -131,22 +163,36 @@ const DashboardBuilderStudioEnhanced = () => {
       <AdminSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
         <div className="bg-white border-b border-slate-200 p-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
               <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="lg:hidden p-2 hover:bg-slate-100 rounded">
                 <Icon name="Menu" size={24} />
               </button>
+              
+              {/* Dashboard Selector */}
+              <select
+                value={currentDashboardId || ''}
+                onChange={(e) => loadDashboard(e.target.value)}
+                className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Dashboard...</option>
+                {dashboards.map(d => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+
               <input
                 type="text"
                 value={dashboardName}
                 onChange={(e) => setDashboardName(e.target.value)}
                 placeholder="Dashboard name"
-                className="text-2xl font-bold px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 text-2xl font-bold px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="flex items-center gap-4">
-              <Button onClick={handleSaveDashboard} loading={saving}>
+              <Button onClick={handleSaveDashboard} disabled={saving} className="flex items-center gap-2">
                 <Icon name="Save" size={18} />
                 Save
               </Button>

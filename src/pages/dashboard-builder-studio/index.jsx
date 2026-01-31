@@ -1,3 +1,3 @@
-import DashboardBuilderEnhanced from './DashboardBuilder';
+import DashboardBuilderStudioEnhanced from './IndexEnhanced';
 
-export default DashboardBuilderEnhanced;
+export default DashboardBuilderStudioEnhanced;
