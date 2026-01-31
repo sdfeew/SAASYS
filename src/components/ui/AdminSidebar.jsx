@@ -18,7 +18,7 @@ const AdminSidebar = ({ isCollapsed = false }) => {
   });
   const [expandedMainModules, setExpandedMainModules] = useState(new Set());
   const [loadingData, setLoadingData] = useState(false);
-  const { tenantId } = useAuth();
+  const { tenantId, roleCode } = useAuth();
   const location = useLocation();
 
   const navigationItems = [
@@ -192,6 +192,13 @@ const AdminSidebar = ({ isCollapsed = false }) => {
         <nav className="flex-1 overflow-y-auto scrollbar-custom px-3 py-6" aria-label="Main navigation">
           <ul className="space-y-2">
             {navigationItems?.map((item) => {
+              // Check if user has permission to see this item
+              // Show item if no permissions specified or if user has one of the required roles
+              if (item?.permissions && item?.permissions?.length > 0) {
+                if (!roleCode || !item?.permissions.includes(roleCode)) {
+                  return null;
+                }
+              }
               const isActive = isActiveRoute(item?.path);
               return (
                 <li key={item?.path}>
