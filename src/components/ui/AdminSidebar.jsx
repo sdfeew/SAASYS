@@ -52,6 +52,48 @@ const AdminSidebar = ({ isCollapsed = false }) => {
       icon: 'Users',
       permissions: ['admin'],
     },
+    {
+      label: 'Analytics',
+      path: '/analytics',
+      icon: 'BarChart2',
+      permissions: ['admin', 'manager'],
+    },
+    {
+      label: 'Settings',
+      path: '/settings',
+      icon: 'Settings',
+      permissions: ['admin', 'manager', 'user'],
+    },
+    {
+      label: 'Help & Documentation',
+      path: '/help',
+      icon: 'HelpCircle',
+      permissions: ['admin', 'manager', 'user'],
+    },
+    {
+      label: 'Team Collaboration',
+      path: '/collaboration',
+      icon: 'Users2',
+      permissions: ['admin', 'manager', 'user'],
+    },
+    {
+      label: 'Integrations',
+      path: '/integrations',
+      icon: 'Plug',
+      permissions: ['admin'],
+    },
+    {
+      label: 'Testing & QA',
+      path: '/testing',
+      icon: 'Bug',
+      permissions: ['admin'],
+    },
+    {
+      label: 'Backups',
+      path: '/backups',
+      icon: 'HardDrive',
+      permissions: ['admin'],
+    },
   ];
 
   // Load modules and dashboards
