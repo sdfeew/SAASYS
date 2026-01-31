@@ -1,1 +1,1 @@
-export { default } from './IndexEnhanced';
+export { default } from './TeamCollaboration';
