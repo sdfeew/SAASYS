@@ -1,3 +1,3 @@
-import DashboardBuilderStudioEnhanced from './IndexEnhanced';
+import LookerStudioBuilder from './LookerStudioBuilder';
 
-export default DashboardBuilderStudioEnhanced;
+export default LookerStudioBuilder;
