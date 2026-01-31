@@ -17,13 +17,13 @@ import DashboardViewer from './pages/dashboard-viewer';
 import DashboardManagement from './pages/dashboard-management';
 import UserManagementConsole from './pages/user-management-console';
 import SchemaBuilderInterface from './pages/schema-builder-interface';
-import AnalyticsPage from './pages/analytics/IndexEnhanced';
-import SettingsPage from './pages/settings/IndexEnhanced';
-import HelpPage from './pages/help/IndexEnhanced';
-import TeamCollaborationPage from './pages/team-collaboration/IndexEnhanced';
-import IntegrationsPage from './pages/integrations/IndexEnhanced';
-import TestingPage from './pages/testing/IndexEnhanced';
-import BackupManagementPage from './pages/backups/IndexEnhanced';
+import AnalyticsPage from './pages/analytics';
+import SettingsPage from './pages/settings';
+import HelpPage from './pages/help';
+import TeamCollaborationPage from './pages/team-collaboration';
+import IntegrationsPage from './pages/integrations';
+import TestingPage from './pages/testing';
+import BackupManagementPage from './pages/backups';
 import { useAuth } from './contexts/AuthContext';
 
 // Protected Route Component
