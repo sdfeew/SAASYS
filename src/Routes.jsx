@@ -17,6 +17,13 @@ import DashboardViewer from './pages/dashboard-viewer';
 import DashboardManagement from './pages/dashboard-management';
 import UserManagementConsole from './pages/user-management-console';
 import SchemaBuilderInterface from './pages/schema-builder-interface';
+import AnalyticsPage from './pages/analytics/IndexEnhanced';
+import SettingsPage from './pages/settings/IndexEnhanced';
+import HelpPage from './pages/help/IndexEnhanced';
+import TeamCollaborationPage from './pages/team-collaboration/IndexEnhanced';
+import IntegrationsPage from './pages/integrations/IndexEnhanced';
+import TestingPage from './pages/testing/IndexEnhanced';
+import BackupManagementPage from './pages/backups/IndexEnhanced';
 import { useAuth } from './contexts/AuthContext';
 
 // Protected Route Component
@@ -119,6 +126,62 @@ const Routes = () => {
             element={
               <ProtectedRoute>
                 <SchemaBuilderInterface />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <AnalyticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <HelpPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/collaboration"
+            element={
+              <ProtectedRoute>
+                <TeamCollaborationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/integrations"
+            element={
+              <ProtectedRoute>
+                <IntegrationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/testing"
+            element={
+              <ProtectedRoute>
+                <TestingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/backups"
+            element={
+              <ProtectedRoute>
+                <BackupManagementPage />
               </ProtectedRoute>
             }
           />
