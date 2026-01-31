@@ -29,7 +29,7 @@ const BackupManagementPage = () => {
         setLoading(true);
         setError(null);
         // Load backups from service
-        const backupsData = await backupService.getBackups();
+        const backupsData = await backupService.getBackupHistory();
         setBackups(backupsData || []);
       } catch (err) {
         setError(err.message || 'Failed to load backups');

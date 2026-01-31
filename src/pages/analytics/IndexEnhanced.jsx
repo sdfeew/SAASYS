@@ -8,7 +8,7 @@ import ErrorAlert from '../../components/ui/ErrorAlert';
 import { useAuth } from '../../contexts/AuthContext';
 
 const AnalyticsPage = () => {
-  const { user } = useAuth();
+  const { user, tenantId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({
@@ -33,10 +33,10 @@ const AnalyticsPage = () => {
         setModules(modulesData);
 
         // Load all statistics
-        const recordStats = await reportingService.getRecordStatistics();
-        const userActivity = await reportingService.getUserActivityReport();
+        const recordStats = await reportingService.getRecordStats();
+        const userActivity = await reportingService.getUserActivityReport(user.id);
         const workflowPerf = await reportingService.getWorkflowPerformanceReport();
-        const moduleUsage = await reportingService.getModuleUsageReport();
+        const moduleUsage = await reportingService.getModuleUsageReport(tenantId);
         const dataQual = await reportingService.getDataQualityReport();
 
         setStats({

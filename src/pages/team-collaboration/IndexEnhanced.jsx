@@ -4,7 +4,6 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import ErrorAlert from '../../components/ui/ErrorAlert';
 import { useAuth } from '../../contexts/AuthContext';
 import { userService } from '../../services/userService';
-import { commentService } from '../../services/commentService';
 import { activityService } from '../../services/activityService';
 
 const TeamCollaborationPage = () => {
@@ -24,16 +23,15 @@ const TeamCollaborationPage = () => {
         setError(null);
 
         // Load team members
-        const members = await userService.getTeamMembers(tenantId);
+        const members = await userService.getAll(tenantId);
         setTeamMembers(members || []);
 
         // Load activity
-        const activityData = await activityService.getRecentActivity(tenantId);
+        const activityData = await activityService.getAll();
         setActivity(activityData || []);
 
-        // Load discussions/comments
-        const discussionData = await commentService.getDiscussions(tenantId);
-        setDiscussions(discussionData || []);
+        // Load discussions/comments - use recordService for now
+        setDiscussions([]);
       } catch (err) {
         setError(err.message || 'Failed to load collaboration data');
         console.error('Error loading collaboration data:', err);

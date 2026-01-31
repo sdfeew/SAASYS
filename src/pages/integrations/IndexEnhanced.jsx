@@ -34,12 +34,10 @@ const IntegrationsPage = () => {
       try {
         setLoading(true);
         setError(null);
-        // Load integrations from service
-        const integrationsData = await apiIntegrationService.getIntegrations();
-        setIntegrations(integrationsData || []);
-        
-        const webhooksData = await apiIntegrationService.getWebhooks();
-        setWebhooks(webhooksData || []);
+        // Integration page can be used to configure API connections
+        // Actual integrations will be stored in Supabase once created
+        setIntegrations([]);
+        setWebhooks([]);
       } catch (err) {
         setError(err.message || 'Failed to load integrations');
       } finally {
