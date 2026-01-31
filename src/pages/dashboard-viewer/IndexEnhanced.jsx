@@ -32,7 +32,7 @@ const DashboardViewerEnhanced = () => {
     setError(null);
     try {
       const data = await dashboardService.getAll(tenantId);
-      const published = data.filter(d => d.status === 'published');
+      const published = data.filter(d => d.is_published === true);
       setDashboards(published || []);
       if (published && published.length > 0) {
         setSelectedDashboard(published[0]);
