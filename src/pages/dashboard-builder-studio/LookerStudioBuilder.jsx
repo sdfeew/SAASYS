@@ -8,7 +8,7 @@ import AdminSidebar from '../../components/ui/AdminSidebar';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Icon from '../../components/AppIcon';
-import { generateUUID } from '../../utils/uuidHelper';
+import { generateUUID, isValidUUID } from '../../utils/uuidHelper';
 
 // Sample data for preview
 const SAMPLE_DATA = [
@@ -210,7 +210,10 @@ const LookerStudioBuilder = () => {
       setDashboard(data);
       setCurrentDashboardId(data.id);
       setDashboardName(data.name);
-      setWidgets(data.layout_config?.widgets || []);
+      
+      // Filter out widgets with invalid UUIDs (old timestamp IDs)
+      const validWidgets = (data.layout_config?.widgets || []).filter(w => isValidUUID(w.id));
+      setWidgets(validWidgets);
     } catch (err) {
       console.error('Error loading dashboard:', err);
     }

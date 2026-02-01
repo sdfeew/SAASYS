@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from '../../../components/AppIcon';
 import { widgetService } from '../../../services/widgetService';
+import { isValidUUID } from '../../../utils/uuidHelper';
 
 const DashboardViewerCanvas = ({ widgets, filters = {}, dashboard }) => {
   const [renderedWidgets, setRenderedWidgets] = useState([]);
@@ -11,9 +12,13 @@ const DashboardViewerCanvas = ({ widgets, filters = {}, dashboard }) => {
   useEffect(() => {
     // Process and render widgets
     if (widgets && widgets.length > 0) {
-      setRenderedWidgets(widgets);
-      // Load data for each widget
-      loadWidgetData(widgets);
+      // Filter out widgets with invalid UUIDs (old timestamp IDs)
+      const validWidgets = widgets.filter(w => isValidUUID(w.id));
+      setRenderedWidgets(validWidgets);
+      // Load data for each valid widget
+      if (validWidgets.length > 0) {
+        loadWidgetData(validWidgets);
+      }
     }
   }, [widgets, filters]);
 
@@ -25,6 +30,15 @@ const DashboardViewerCanvas = ({ widgets, filters = {}, dashboard }) => {
 
   const loadSingleWidget = async (widget) => {
     try {
+      // Skip loading if widget ID is not a valid UUID
+      if (!isValidUUID(widget.id)) {
+        setWidgetErrors(prev => ({
+          ...prev,
+          [widget.id]: 'Invalid widget ID format (old timestamp ID). Please recreate this widget.'
+        }));
+        return;
+      }
+
       setLoadingWidgets(prev => ({ ...prev, [widget.id]: true }));
       
       // Prepare filter parameters for this widget
