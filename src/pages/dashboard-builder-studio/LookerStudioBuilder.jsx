@@ -232,6 +232,9 @@ const LookerStudioBuilder = () => {
     setWidgets(updatedWidgets);
     setShowAddWidget(false);
     setNewWidget({ title: 'New Chart', type: 'bar', width: 4, height: 3, config: { metrics: ['sales'] } });
+    
+    // Show feedback
+    console.log('✅ Widget added. Total widgets:', updatedWidgets.length);
   };
 
   const handleDeleteWidget = (widgetId) => {
@@ -252,13 +255,17 @@ const LookerStudioBuilder = () => {
 
     setSaving(true);
     try {
-      await dashboardService.update(dashboard.id, {
+      const updatedDashboard = await dashboardService.update(dashboard.id, {
         name: dashboardName,
-        layoutConfig: { widgets }
+        description: dashboard.description,
+        layoutConfig: { widgets },
+        isPublished: dashboard.is_published
       });
-      setDashboard({ ...dashboard, name: dashboardName });
+      setDashboard(updatedDashboard);
+      alert('✅ Dashboard saved successfully!');
     } catch (err) {
       console.error('Error saving dashboard:', err);
+      alert('❌ Error saving dashboard: ' + err.message);
     } finally {
       setSaving(false);
     }
