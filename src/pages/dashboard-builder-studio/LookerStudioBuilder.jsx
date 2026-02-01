@@ -27,92 +27,98 @@ const ChartWidget = ({ widget, data = SAMPLE_DATA }) => {
   switch (widget.type) {
     case 'line':
       return (
-        <ResponsiveContainer width="100%" height="100%">
-          <RechartLineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            {config.metrics?.map((metric, idx) => (
-              <Line
-                key={metric}
-                type="monotone"
-                dataKey={metric}
-                stroke={CHART_COLORS[idx % CHART_COLORS.length]}
-                strokeWidth={2}
-              />
-            )) || <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={2} />}
-          </RechartLineChart>
-        </ResponsiveContainer>
+        <div className="w-full h-full flex items-center justify-center">
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartLineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              {config.metrics?.map((metric, idx) => (
+                <Line
+                  key={metric}
+                  type="monotone"
+                  dataKey={metric}
+                  stroke={CHART_COLORS[idx % CHART_COLORS.length]}
+                  strokeWidth={2}
+                />
+              )) || <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={2} />}
+            </RechartLineChart>
+          </ResponsiveContainer>
+        </div>
       );
 
     case 'bar':
       return (
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            {config.metrics?.map((metric, idx) => (
-              <Bar
-                key={metric}
-                dataKey={metric}
-                fill={CHART_COLORS[idx % CHART_COLORS.length]}
-              />
-            )) || <Bar dataKey="sales" fill="#3b82f6" />}
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="w-full h-full flex items-center justify-center">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              {config.metrics?.map((metric, idx) => (
+                <Bar
+                  key={metric}
+                  dataKey={metric}
+                  fill={CHART_COLORS[idx % CHART_COLORS.length]}
+                />
+              )) || <Bar dataKey="sales" fill="#3b82f6" />}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       );
 
     case 'pie':
       return (
-        <ResponsiveContainer width="100%" height="100%">
-          <RechartPieChart>
-            <Pie
-              data={data}
-              dataKey={config.metrics?.[0] || 'sales'}
-              nameKey="month"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              label
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </RechartPieChart>
-        </ResponsiveContainer>
+        <div className="w-full h-full flex items-center justify-center">
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartPieChart>
+              <Pie
+                data={data}
+                dataKey={config.metrics?.[0] || 'sales'}
+                nameKey="month"
+                cx="50%"
+                cy="50%"
+                outerRadius={50}
+                label={false}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </RechartPieChart>
+          </ResponsiveContainer>
+        </div>
       );
 
     case 'table':
       return (
-        <div className="overflow-auto h-full">
-          <table className="w-full text-sm">
+        <div className="overflow-auto h-full w-full">
+          <table className="w-full text-xs">
             <thead className="bg-slate-100 sticky top-0">
               <tr>
-                <th className="px-4 py-2 text-left font-semibold">Month</th>
+                <th className="px-2 py-1 text-left font-semibold">Month</th>
                 {config.metrics?.map(metric => (
-                  <th key={metric} className="px-4 py-2 text-left font-semibold">{metric}</th>
+                  <th key={metric} className="px-2 py-1 text-left font-semibold">{metric}</th>
                 )) || <>
-                  <th className="px-4 py-2 text-left font-semibold">Sales</th>
-                  <th className="px-4 py-2 text-left font-semibold">Users</th>
+                  <th className="px-2 py-1 text-left font-semibold">Sales</th>
+                  <th className="px-2 py-1 text-left font-semibold">Users</th>
                 </>}
               </tr>
             </thead>
             <tbody>
               {data.map((row, idx) => (
                 <tr key={idx} className="border-b hover:bg-slate-50">
-                  <td className="px-4 py-2">{row.month}</td>
+                  <td className="px-2 py-1">{row.month}</td>
                   {config.metrics?.map(metric => (
-                    <td key={metric} className="px-4 py-2">{row[metric]}</td>
+                    <td key={metric} className="px-2 py-1">{row[metric]}</td>
                   )) || <>
-                    <td className="px-4 py-2">{row.sales}</td>
-                    <td className="px-4 py-2">{row.users}</td>
+                    <td className="px-2 py-1">{row.sales}</td>
+                    <td className="px-2 py-1">{row.users}</td>
                   </>}
                 </tr>
               ))}
@@ -123,20 +129,20 @@ const ChartWidget = ({ widget, data = SAMPLE_DATA }) => {
 
     case 'scorecard':
       return (
-        <div className="flex flex-col items-center justify-center h-full">
-          <div className="text-5xl font-bold text-blue-600">
+        <div className="flex flex-col items-center justify-center h-full w-full">
+          <div className="text-4xl font-bold text-blue-600">
             {config.metrics?.[0] ? data[0]?.[config.metrics[0]] : '1,234'}
           </div>
-          <p className="text-gray-600 mt-2">{config.title || 'Total'}</p>
+          <p className="text-sm text-gray-600 mt-2">{config.title || 'Total'}</p>
         </div>
       );
 
     default:
       return (
-        <div className="flex items-center justify-center h-full bg-slate-50">
+        <div className="flex items-center justify-center h-full w-full bg-slate-50">
           <div className="text-center">
             <BarChart3 className="mx-auto text-gray-400 mb-2" size={40} />
-            <p className="text-gray-600">Chart preview</p>
+            <p className="text-gray-600 text-sm">Chart preview</p>
           </div>
         </div>
       );
@@ -327,14 +333,16 @@ const LookerStudioBuilder = () => {
               {widgets.map(widget => (
                 <div
                   key={widget.id}
-                  className="bg-white rounded-lg shadow p-4 border border-slate-200"
+                  className="bg-white rounded-lg shadow p-4 border border-slate-200 overflow-hidden flex flex-col"
                   style={{
                     gridColumn: `span ${Math.min(widget.width, 12)}`,
-                    minHeight: `${widget.height * 100}px`
+                    height: `${widget.height * 100 + 40}px`
                   }}
                 >
-                  <h3 className="font-semibold text-slate-900 mb-4">{widget.title}</h3>
-                  <ChartWidget widget={widget} />
+                  <h3 className="font-semibold text-slate-900 mb-4 flex-shrink-0">{widget.title}</h3>
+                  <div className="flex-1 overflow-hidden min-h-0">
+                    <ChartWidget widget={widget} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -364,26 +372,31 @@ const LookerStudioBuilder = () => {
                     <div
                       key={widget.id}
                       onClick={() => setSelectedWidget(widget)}
-                      className={`bg-white rounded-lg shadow p-4 border-2 cursor-pointer transition ${
+                      className={`bg-white rounded-lg shadow p-4 border-2 cursor-pointer transition overflow-hidden flex flex-col ${
                         selectedWidget?.id === widget.id
                           ? 'border-blue-500 ring-2 ring-blue-200'
                           : 'border-slate-200 hover:border-slate-300'
                       }`}
                       style={{
                         gridColumn: `span ${Math.min(widget.width, 12)}`,
-                        minHeight: `${widget.height * 100}px`
+                        height: `${widget.height * 100 + 40}px`
                       }}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <h3 className="font-semibold text-slate-900 flex-1">{widget.title}</h3>
+                      <div className="flex items-start justify-between mb-3 flex-shrink-0">
+                        <h3 className="font-semibold text-slate-900 flex-1 truncate">{widget.title}</h3>
                         <button
-                          onClick={() => handleDeleteWidget(widget.id)}
-                          className="p-1 hover:bg-red-100 text-red-600 rounded"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteWidget(widget.id);
+                          }}
+                          className="p-1 hover:bg-red-100 text-red-600 rounded flex-shrink-0"
                         >
                           <Trash2 size={16} />
                         </button>
                       </div>
-                      <ChartWidget widget={widget} />
+                      <div className="flex-1 overflow-hidden min-h-0">
+                        <ChartWidget widget={widget} />
+                      </div>
                     </div>
                   ))
                 )}
