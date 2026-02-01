@@ -8,6 +8,7 @@ import AdminSidebar from '../../components/ui/AdminSidebar';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Icon from '../../components/AppIcon';
+import { generateUUID } from '../../utils/uuidHelper';
 
 // Sample data for preview
 const SAMPLE_DATA = [
@@ -219,7 +220,7 @@ const LookerStudioBuilder = () => {
     if (!dashboard) return;
 
     const widget = {
-      id: Date.now(),
+      id: generateUUID(),
       ...newWidget,
       position: { x: 0, y: widgets.length * 4 }
     };
