@@ -15,11 +15,21 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [tenantId, setTenantId] = useState(null);
+  const [currentTenant, setCurrentTenant] = useState(null);
   const [roleCode, setRoleCode] = useState(null);
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Store tenant context for services to use
+  const getTenantContext = () => ({
+    tenantId,
+    currentTenant,
+    roleCode,
+    userId: user?.id,
+    isAuthenticated: !!user
+  });
 
   // Isolated async operations - never called from auth callbacks
   const profileOperations = {
@@ -36,6 +46,7 @@ export const AuthProvider = ({ children }) => {
         if (!error && data) {
           setUserProfile(data);
           setTenantId(data?.tenant_id);
+          setCurrentTenant(data?.tenant_id);
           setRoleCode(data?.role_code);
           setPermissions(data?.permissions || []);
         } else if (error?.code === 'PGRST116') {
@@ -112,6 +123,7 @@ export const AuthProvider = ({ children }) => {
           if (!insertError && data) {
             setUserProfile(data);
             setTenantId(data?.tenant_id);
+            setCurrentTenant(data?.tenant_id);
             setRoleCode(data?.role_code);
             setPermissions(data?.permissions || []);
             console.log('Profile created successfully:', data);
@@ -127,6 +139,7 @@ export const AuthProvider = ({ children }) => {
             if (existingProfile) {
               setUserProfile(existingProfile);
               setTenantId(existingProfile?.tenant_id);
+              setCurrentTenant(existingProfile?.tenant_id);
               setRoleCode(existingProfile?.role_code);
               setPermissions(existingProfile?.permissions || []);
               console.log('Loaded existing profile:', existingProfile);
@@ -148,6 +161,7 @@ export const AuthProvider = ({ children }) => {
     clear() {
       setUserProfile(null);
       setTenantId(null);
+      setCurrentTenant(null);
       setRoleCode(null);
       setPermissions([]);
       setProfileLoading(false);
@@ -301,6 +315,8 @@ export const AuthProvider = ({ children }) => {
       
       if (!error && data) {
         setUserProfile(data);
+        setTenantId(data?.tenant_id);
+        setCurrentTenant(data?.tenant_id);
         setRoleCode(data?.role_code);
         setPermissions(data?.permissions || []);
       } else {
@@ -396,6 +412,7 @@ export const AuthProvider = ({ children }) => {
     user,
     userProfile,
     tenantId,
+    currentTenant,
     roleCode,
     permissions,
     
@@ -418,6 +435,7 @@ export const AuthProvider = ({ children }) => {
     // Helper methods
     hasPermission,
     hasRole,
+    getTenantContext,
     
     // Utility
     isAuthenticated: !!user,
