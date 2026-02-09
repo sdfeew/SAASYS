@@ -1,8 +1,22 @@
 -- Simpler RLS migration - only for tables that exist with tenant_id
--- Disable this if you face errors and run it manually with correct table structure
+-- Idempotent: Safe to run multiple times
 
 -- Enable RLS on tenants table
-ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+DO $$ 
+BEGIN
+  ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END $$;
+
+-- Drop existing policies if they exist
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Authenticated users see all tenants" ON tenants CASCADE;
+  DROP POLICY IF EXISTS "Admins update own tenant" ON tenants CASCADE;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
 
 -- Authenticated users can see all tenants (for login/selection)
 CREATE POLICY "Authenticated users see all tenants" ON tenants
@@ -22,7 +36,24 @@ CREATE POLICY "Admins update own tenant" ON tenants
   );
 
 -- Enable RLS on user_profiles table
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+DO $$ 
+BEGIN
+  ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END $$;
+
+-- Drop existing policies if they exist
+DO $$ 
+BEGIN
+  DROP POLICY IF EXISTS "Users see own profile" ON user_profiles CASCADE;
+  DROP POLICY IF EXISTS "Users see tenant member profiles" ON user_profiles CASCADE;
+  DROP POLICY IF EXISTS "Users insert own profile" ON user_profiles CASCADE;
+  DROP POLICY IF EXISTS "Users update own profile" ON user_profiles CASCADE;
+  DROP POLICY IF EXISTS "Admins manage tenant profiles" ON user_profiles CASCADE;
+EXCEPTION WHEN OTHERS THEN
+  NULL;
+END $$;
 
 -- Users can see their own profile
 CREATE POLICY "Users see own profile" ON user_profiles
