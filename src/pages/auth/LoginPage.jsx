@@ -42,7 +42,7 @@ const LoginPage = () => {
     if (error) {
       setLocalError(error?.message || 'Failed to sign in');
     } else if (data?.user) {
-      navigate('/');
+      navigate('/auth/tenant-selector');
     }
     
     setIsSubmitting(false);

@@ -9,7 +9,7 @@ import { errorHandler } from '../../utils/errorHandler';
 const TenantSelectorPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, setCurrentTenant } = useAuth();
+  const { user, userProfile, updateProfile } = useAuth();
 
   const [tenants, setTenants] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,12 +58,12 @@ const TenantSelectorPage = () => {
         status: 'active'
       });
 
-      // Set as current tenant
-      setCurrentTenant(newTenant);
+      // Update user profile to set current tenant
+      await updateProfile({ tenant_id: newTenant.id });
 
       // Redirect to dashboard
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/');
       }, 500);
     } catch (err) {
       errorHandler.logError('CreateTenant', err);
@@ -75,11 +75,18 @@ const TenantSelectorPage = () => {
 
   const handleSelectTenant = async (tenant) => {
     setSelectedTenant(tenant.id);
-    setCurrentTenant(tenant);
     
-    setTimeout(() => {
-      navigate('/dashboard');
-    }, 500);
+    try {
+      // Update user profile to set current tenant
+      await updateProfile({ tenant_id: tenant.id });
+      
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
+    } catch (err) {
+      errorHandler.logError('SelectTenant', err);
+      setError(err?.message || 'Failed to select tenant');
+    }
   };
 
   return (
