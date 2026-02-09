@@ -169,9 +169,9 @@ const AdminSidebar = ({ isCollapsed = false }) => {
         />
       )}
       <aside
-        className={`admin-sidebar fixed lg:fixed top-0 left-0 h-full bg-card border-r border-border z-40 transition-smooth flex flex-col ${
-          isCollapsed ? 'collapsed w-20' : 'w-60'
-        } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+        className={`admin-sidebar group fixed lg:relative top-0 left-0 h-full bg-card border-r border-border z-40 transition-all duration-300 flex flex-col ${
+          isCollapsed ? 'w-0 -ml-60 lg:w-20 lg:ml-0' : 'w-0 -ml-60 lg:w-60 lg:ml-0'
+        } hover:w-60 hover:ml-0 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         <div className="admin-sidebar-header flex-shrink-0">
           <div className="flex items-center gap-3 p-4">

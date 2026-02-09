@@ -8,6 +8,7 @@ import AdminSidebar from '../../components/ui/AdminSidebar';
 import ModuleBreadcrumbs from '../../components/ui/ModuleBreadcrumbs';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
 import NotificationBadge from '../../components/ui/NotificationBadge';
+import { useToast } from '../../contexts/ToastContext';
 import UserTableRow from './components/UserTableRow';
 import UserCard from './components/UserCard';
 import UserDetailsPanel from './components/UserDetailsPanel';
@@ -17,7 +18,7 @@ import BulkActionsModal from './components/BulkActionsModal';
 import { userService } from '../../services/userService';
 
 const UserManagementConsole = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const toast = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -183,8 +184,10 @@ const UserManagementConsole = () => {
   if (loading) {
     return (
       <div className="flex h-screen bg-background overflow-hidden">
-        <AdminSidebar isCollapsed={sidebarCollapsed} />
-        <div className={`flex-1 flex items-center justify-center transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+        <div className="flex-shrink-0 w-60 lg:w-60 overflow-hidden">
+          <AdminSidebar />
+        </div>
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Icon name="Loader2" size={32} className="animate-spin mx-auto mb-2" />
             <p className="text-muted-foreground">Loading users...</p>
@@ -195,19 +198,13 @@ const UserManagementConsole = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminSidebar isCollapsed={sidebarCollapsed} />
-      <div className={`transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+    <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex-shrink-0 w-60 lg:w-60 overflow-hidden">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 flex flex-col">
         <header className="sticky top-0 z-30 bg-card border-b border-border shadow-elevation-1">
           <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex items-center justify-center w-10 h-10 rounded-md hover:bg-muted transition-smooth"
-              aria-label="Toggle sidebar"
-            >
-              <Icon name={sidebarCollapsed ? 'PanelLeftOpen' : 'PanelLeftClose'} size={20} />
-            </button>
-
             <div className="flex items-center gap-3 md:gap-4 ml-auto">
               <button className="relative p-2 rounded-md hover:bg-muted transition-smooth">
                 <Icon name="Bell" size={20} />

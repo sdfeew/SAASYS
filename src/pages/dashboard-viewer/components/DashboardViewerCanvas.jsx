@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Icon from '../../../components/AppIcon';
 import { widgetService } from '../../../services/widgetService';
 import { isValidUUID } from '../../../utils/uuidHelper';
@@ -8,65 +8,76 @@ const DashboardViewerCanvas = ({ widgets, filters = {}, dashboard }) => {
   const [widgetErrors, setWidgetErrors] = useState({});
   const [widgetData, setWidgetData] = useState({});
   const [loadingWidgets, setLoadingWidgets] = useState({});
+  const widgetsLoaded = useRef(new Set());
 
-  useEffect(() => {
-    // Process and render widgets
-    if (widgets && widgets.length > 0) {
-      // Filter out widgets with invalid UUIDs (old timestamp IDs)
-      const validWidgets = widgets.filter(w => isValidUUID(w.id));
-      setRenderedWidgets(validWidgets);
-      // Load data for each valid widget
-      if (validWidgets.length > 0) {
-        loadWidgetData(validWidgets);
-      }
-    }
-  }, [widgets, filters]);
-
-  const loadWidgetData = async (widgetsList) => {
-    for (const widget of widgetsList) {
-      await loadSingleWidget(widget);
-    }
-  };
-
-  const loadSingleWidget = async (widget) => {
+  const loadSingleWidget = useCallback(async (widget) => {
     try {
+      // Skip if already loading or loaded
+      if (widgetsLoaded.current.has(widget.id) || loadingWidgets[widget.id]) {
+        return;
+      }
+
       // Skip loading if widget ID is not a valid UUID
       if (!isValidUUID(widget.id)) {
         setWidgetErrors(prev => ({
           ...prev,
           [widget.id]: 'Invalid widget ID format (old timestamp ID). Please recreate this widget.'
         }));
+        widgetsLoaded.current.add(widget.id);
         return;
       }
 
+      // Mark as loading
+      widgetsLoaded.current.add(widget.id);
       setLoadingWidgets(prev => ({ ...prev, [widget.id]: true }));
       
-      // Prepare filter parameters for this widget
-      const widgetFilters = {};
-      if (widget.filterFields) {
-        widget.filterFields.forEach(field => {
-          if (filters[field.name]) {
-            widgetFilters[field.name] = filters[field.name];
-          }
-        });
-      }
+      // Set timeout to prevent hanging requests
+      const loadPromise = new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Widget load timeout'));
+        }, 30000); // 30 second timeout
 
-      // Load widget data with filters applied
-      const data = await widgetService?.getWidgetData(widget.id, widgetFilters);
-      
-      setWidgetData(prev => ({
-        ...prev,
-        [widget.id]: data
-      }));
-      
-      // Clear any previous errors
-      setWidgetErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[widget.id];
-        return newErrors;
+        // Prepare filter parameters for this widget
+        const widgetFilters = {};
+        if (widget.filterFields) {
+          widget.filterFields.forEach(field => {
+            if (filters[field.name]) {
+              widgetFilters[field.name] = filters[field.name];
+            }
+          });
+        }
+
+        // Call widget service with proper error handling
+        if (widgetService?.getWidgetData) {
+          widgetService.getWidgetData(widget.id, widgetFilters)
+            .then(data => {
+              clearTimeout(timeout);
+              setWidgetData(prev => ({ ...prev, [widget.id]: data }));
+              setWidgetErrors(prev => {
+                const updated = { ...prev };
+                delete updated[widget.id];
+                return updated;
+              });
+              resolve(data);
+            })
+            .catch(error => {
+              clearTimeout(timeout);
+              console.error(`Error loading widget ${widget.id}:`, error);
+              setWidgetErrors(prev => ({
+                ...prev,
+                [widget.id]: `Failed to load: ${error?.message || 'Unknown error'}`
+              }));
+              reject(error);
+            });
+        } else {
+          clearTimeout(timeout);
+          resolve(null);
+        }
       });
+
+      await loadPromise;
     } catch (error) {
-      console.error(`Error loading widget ${widget.id}:`, error);
+      console.error('Error in loadSingleWidget:', error);
       setWidgetErrors(prev => ({
         ...prev,
         [widget.id]: error?.message || 'Failed to load widget data'
@@ -74,7 +85,40 @@ const DashboardViewerCanvas = ({ widgets, filters = {}, dashboard }) => {
     } finally {
       setLoadingWidgets(prev => ({ ...prev, [widget.id]: false }));
     }
-  };
+  }, [filters, loadingWidgets]);
+
+  const loadWidgetData = useCallback((widgetsList) => {
+    if (!widgetsList || widgetsList.length === 0) {
+      return;
+    }
+
+    // Load widgets sequentially with a small delay to prevent overwhelming the server
+    const loadSequentially = async () => {
+      for (const widget of widgetsList) {
+        await loadSingleWidget(widget);
+        // Small delay between requests to prevent server overload
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    };
+
+    loadSequentially().catch(err => {
+      console.error('Error loading widget data:', err);
+    });
+  }, [loadSingleWidget]);
+
+  useEffect(() => {
+    if (widgets && widgets.length > 0) {
+      setRenderedWidgets(widgets);
+      loadWidgetData(widgets);
+    } else {
+      setRenderedWidgets([]);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      widgetsLoaded.current.clear();
+    };
+  }, [widgets, loadWidgetData]);
 
   const handleWidgetError = (widgetId, error) => {
     setWidgetErrors(prev => ({

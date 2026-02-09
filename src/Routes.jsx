@@ -9,6 +9,7 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import TenantSelectorPage from './pages/auth/TenantSelectorPage';
+import TenantInvitePage from './pages/auth/TenantInvitePage';
 import DynamicModuleListView from './pages/dynamic-module-list-view';
 import TenantAdminDashboard from './pages/tenant-admin-dashboard';
 import RecordDetailManagement from './pages/record-detail-management';
@@ -24,6 +25,7 @@ import TeamCollaborationPage from './pages/team-collaboration';
 import IntegrationsPage from './pages/integrations';
 import TestingPage from './pages/testing';
 import BackupManagementPage from './pages/backups';
+import InvitationManagementPage from './pages/settings/InvitationManagementPage';
 import { useAuth } from './contexts/AuthContext';
 
 // Protected Route Component
@@ -54,6 +56,7 @@ const Routes = () => {
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
           <Route path="/auth/tenant-selector" element={<TenantSelectorPage />} />
+          <Route path="/auth/invite" element={<TenantInvitePage />} />
           <Route path="/tenant-selector" element={<TenantSelectorPage />} />
 
           {/* Protected Routes */}
@@ -142,6 +145,14 @@ const Routes = () => {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/invitations"
+            element={
+              <ProtectedRoute>
+                <InvitationManagementPage />
               </ProtectedRoute>
             }
           />

@@ -1,43 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { RefreshCw, Download, AlertCircle, Loader2, Filter } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import AdminSidebar from '../../components/ui/AdminSidebar';
-import ModuleBreadcrumbs from '../../components/ui/ModuleBreadcrumbs';
-import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
-import NotificationBadge from '../../components/ui/NotificationBadge';
-import Icon from '../../components/AppIcon';
+import { PageContainer, PageCard } from '../../components/layout/PageComponents';
 import DashboardViewerCanvas from './components/DashboardViewerCanvas';
 import FilterPanel from './components/FilterPanel';
-import NotificationDropdown from '../../components/ui/NotificationDropdown';
 import { dashboardService } from '../../services/dashboardService';
 
 const DashboardViewer = () => {
   const [searchParams] = useSearchParams();
   const { tenantId, user } = useAuth();
+  const toast = useToast();
   const dashboardId = searchParams.get('id');
   
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [filterPanelCollapsed, setFilterPanelCollapsed] = useState(false);
   const [dashboard, setDashboard] = useState(null);
   const [widgets, setWidgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({});
   const [refreshing, setRefreshing] = useState(false);
+  const [filters, setFilters] = useState({});
+  const [filtersPanelCollapsed, setFiltersPanelCollapsed] = useState(false);
+  
+  // Prevent infinite loops
+  const loadAttempt = useRef(0);
+  const maxLoadAttempts = 1;
+  const isDashboardLoaded = useRef(false);
 
-  useEffect(() => {
-    if (dashboardId && tenantId) {
-      loadDashboard();
+  // Use useCallback to prevent dependency changes
+  const loadDashboard = useCallback(async () => {
+    // Prevent multiple simultaneous requests
+    if (isDashboardLoaded.current || loadAttempt.current >= maxLoadAttempts) {
+      return;
     }
-  }, [dashboardId, tenantId]);
 
-  const loadDashboard = async () => {
+    if (!dashboardId || !tenantId) {
+      return;
+    }
+
+    loadAttempt.current += 1;
+
     try {
       setLoading(true);
       setError(null);
       
-      // Fetch dashboard
-      const dashboardData = await dashboardService.getById(dashboardId);
+      // Fetch dashboard with timeout protection
+      const dashboardData = await Promise.race([
+        dashboardService.getById(dashboardId),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 15000)
+        )
+      ]);
       
       if (!dashboardData) {
         setError('Dashboard not found');
@@ -46,66 +60,101 @@ const DashboardViewer = () => {
 
       // Check if dashboard is published
       if (!dashboardData.is_published) {
-        setError('This dashboard is not published yet');
+        setError('This dashboard is not published yet. Please publish it from Dashboard Management.');
         return;
       }
 
       setDashboard(dashboardData);
       
-      // Parse widgets from layout_config if stored there, or from separate field
-      const dashboardWidgets = dashboardData.layout_config?.widgets || dashboardData.widgets || [];
-      setWidgets(dashboardWidgets);
+      // Safe widget extraction with fallbacks
+      const dashboardWidgets = dashboardData?.layout_config?.widgets || 
+                               dashboardData?.widgets || 
+                               [];
+      
+      if (!Array.isArray(dashboardWidgets)) {
+        console.warn('Widgets is not an array:', dashboardWidgets);
+        setWidgets([]);
+      } else {
+        setWidgets(dashboardWidgets);
+      }
+      
+      isDashboardLoaded.current = true;
     } catch (err) {
       console.error('Error loading dashboard:', err);
-      setError('Failed to load dashboard');
+      setError(err?.message || 'Failed to load dashboard');
+      toast?.error(err?.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }
-  };
+  }, [dashboardId, tenantId, toast]);
 
-  const handleRefresh = async () => {
+  // Single useEffect with proper dependencies
+  useEffect(() => {
+    // Reset attempt counter when params change
+    loadAttempt.current = 0;
+    isDashboardLoaded.current = false;
+    
+    loadDashboard();
+    
+    // Cleanup function
+    return () => {
+      // Cancel any pending requests on unmount
+      dashboardService.clearCache?.();
+    };
+  }, [dashboardId, loadDashboard]);
+
+  const handleRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
-      // Refresh all widget data
+      // Reset loaded state to allow refresh
+      isDashboardLoaded.current = false;
+      loadAttempt.current = 0;
+      
+      // Clear cache before refresh
+      dashboardService.clearCache?.();
+      
       await loadDashboard();
+      toast?.success('Dashboard refreshed');
+    } catch (err) {
+      toast?.error('Failed to refresh dashboard');
     } finally {
       setRefreshing(false);
     }
-  };
+  }, [loadDashboard, toast]);
 
-  const handleFilterChange = (newFilters) => {
-    setFilters(newFilters);
-    // Filters will be applied to widget queries
-  };
-
-  const handleExportDashboard = () => {
+  const handleExportDashboard = useCallback(() => {
     if (!dashboard) return;
     
-    // Export dashboard as JSON
-    const dataStr = JSON.stringify({
-      name: dashboard.name,
-      description: dashboard.description,
-      widgets: widgets,
-      exportedAt: new Date().toISOString()
-    }, null, 2);
-    
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${dashboard.name}-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+    try {
+      const dataStr = JSON.stringify({
+        name: dashboard.name,
+        description: dashboard.description,
+        widgets: widgets,
+        exportedAt: new Date().toISOString()
+      }, null, 2);
+      
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${dashboard.name}-${Date.now()}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast?.success('Dashboard exported successfully');
+    } catch (err) {
+      console.error('Export error:', err);
+      toast?.error('Failed to export dashboard');
+    }
+  }, [dashboard, widgets, toast]);
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-background overflow-hidden">
-        <AdminSidebar isCollapsed={sidebarCollapsed} />
-        <div className={`flex-1 flex items-center justify-center transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Icon name="Loader2" size={32} className="animate-spin mx-auto mb-2" />
-            <p className="text-muted-foreground">Loading dashboard...</p>
+            <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-3" />
+            <p className="text-slate-600">Loading dashboard...</p>
           </div>
         </div>
       </div>
@@ -114,16 +163,16 @@ const DashboardViewer = () => {
 
   if (error) {
     return (
-      <div className="flex h-screen bg-background overflow-hidden">
-        <AdminSidebar isCollapsed={sidebarCollapsed} />
-        <div className={`flex-1 flex items-center justify-center transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Icon name="AlertCircle" size={48} className="mx-auto mb-4 text-destructive" />
-            <h2 className="text-lg font-semibold text-foreground mb-2">Unable to Load Dashboard</h2>
-            <p className="text-muted-foreground mb-6">{error}</p>
+            <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-slate-900 mb-2">Unable to Load Dashboard</h2>
+            <p className="text-slate-600 mb-6">{error}</p>
             <button
               onClick={() => window.history.back()}
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               Go Back
             </button>
@@ -134,109 +183,84 @@ const DashboardViewer = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <AdminSidebar isCollapsed={sidebarCollapsed} />
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <AdminSidebar />
 
-      <div className={`flex-1 flex flex-col transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
-        {/* Header */}
-        <header className="bg-card border-b border-border px-4 md:px-6 py-3 md:py-4">
-          <div className="flex items-center justify-between gap-4">
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex p-2 rounded-md hover:bg-muted transition-smooth"
-              aria-label="Toggle sidebar"
-            >
-              <Icon name="PanelLeftClose" size={20} />
-            </button>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Filters Sidebar */}
+        <FilterPanel
+          widgets={widgets}
+          onFilterChange={setFilters}
+          isCollapsed={filtersPanelCollapsed}
+          onToggle={() => setFiltersPanelCollapsed(!filtersPanelCollapsed)}
+        />
 
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg md:text-xl font-heading font-semibold text-foreground truncate">
-                {dashboard?.name || 'Dashboard'}
-              </h1>
-              {dashboard?.description && (
-                <p className="caption text-muted-foreground hidden md:block line-clamp-1">
-                  {dashboard.description}
-                </p>
-              )}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <header className="flex-shrink-0 bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl font-bold text-slate-900 truncate">
+                  {dashboard?.name || 'Dashboard'}
+                </h1>
+                {dashboard?.description && (
+                  <p className="text-sm text-slate-600 mt-1 truncate">
+                    {dashboard.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {!filtersPanelCollapsed && widgets.length > 0 && (
+                  <button
+                    onClick={() => setFilters({})}
+                    className="px-3 py-2 text-sm rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors text-slate-700"
+                    title="Clear all filters"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setFiltersPanelCollapsed(!filtersPanelCollapsed)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    filtersPanelCollapsed
+                      ? 'bg-blue-50 hover:bg-blue-100 text-blue-600'
+                      : 'hover:bg-slate-100 text-slate-600'
+                  }`}
+                  title="Toggle filters"
+                >
+                  <Filter className="h-5 w-5" />
+                </button>
+
+                <button
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                  className="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 transition-colors"
+                  title="Refresh dashboard"
+                >
+                  <RefreshCw className={`h-5 w-5 text-slate-600 ${refreshing ? 'animate-spin' : ''}`} />
+                </button>
+                
+                <button
+                  onClick={handleExportDashboard}
+                  className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  title="Export as JSON"
+                >
+                  <Download className="h-5 w-5 text-slate-600" />
+                </button>
+              </div>
             </div>
+          </header>
 
-            <div className="flex items-center gap-2 md:gap-3">
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                className="p-2 rounded-md hover:bg-muted transition-smooth disabled:opacity-50"
-                aria-label="Refresh dashboard"
-              >
-                <Icon name={refreshing ? "Loader2" : "RefreshCw"} size={18} className={refreshing ? "animate-spin" : ""} />
-              </button>
-              
-              <button
-                onClick={handleExportDashboard}
-                className="p-2 rounded-md hover:bg-muted transition-smooth"
-                aria-label="Export dashboard"
-                title="Export as JSON"
-              >
-                <Icon name="Download" size={18} />
-              </button>
-
-              <NotificationDropdown />
-              <UserProfileDropdown />
-            </div>
-          </div>
-        </header>
-
-        {/* Breadcrumbs */}
-        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-card">
-          <ModuleBreadcrumbs />
-        </div>
-
-        {/* Toolbar */}
-        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-muted/30 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              Showing {widgets.length} widget{widgets.length !== 1 ? 's' : ''}
-            </span>
-            {dashboard?.created_at && (
-              <span className="text-xs text-muted-foreground px-2 py-1 bg-background rounded">
-                Updated {new Date(dashboard.created_at).toLocaleDateString()}
-              </span>
-            )}
-          </div>
-
-          <button
-            onClick={() => setFilterPanelCollapsed(!filterPanelCollapsed)}
-            className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-muted transition-smooth text-sm"
-          >
-            <Icon name="Filter" size={16} />
-            <span className="hidden sm:inline">Filters</span>
-            {Object.keys(filters).length > 0 && (
-              <span className="ml-1 px-2 py-0.5 rounded bg-primary text-primary-foreground text-xs font-medium">
-                {Object.keys(filters).length}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Filter Panel */}
-          {!filterPanelCollapsed && (
-            <FilterPanel
-              widgets={widgets}
-              onFilterChange={handleFilterChange}
-              isCollapsed={filterPanelCollapsed}
-              onToggle={() => setFilterPanelCollapsed(!filterPanelCollapsed)}
-            />
-          )}
-
-          {/* Dashboard Canvas */}
-          <div className="flex-1 overflow-auto scrollbar-custom">
+          {/* Content */}
+          <PageContainer>
             <DashboardViewerCanvas
               widgets={widgets}
-              filters={filters}
               dashboard={dashboard}
+              filters={filters}
             />
-          </div>
+          </PageContainer>
         </div>
       </div>
     </div>

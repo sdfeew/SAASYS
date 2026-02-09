@@ -38,6 +38,10 @@ export const AuthProvider = ({ children }) => {
           setTenantId(data?.tenant_id);
           setRoleCode(data?.role_code);
           setPermissions(data?.permissions || []);
+        } else if (error?.code === 'PGRST116') {
+          // Profile doesn't exist - create it with a default tenant
+          console.log('Profile not found, creating new profile...');
+          await this.createDefaultProfile(userId);
         } else {
           console.error('Profile load error:', error);
           setError(error?.message || 'Failed to load user profile');
@@ -47,6 +51,87 @@ export const AuthProvider = ({ children }) => {
         setError(error?.message || 'Failed to load user profile');
       } finally {
         setProfileLoading(false);
+      }
+    },
+
+    async createDefaultProfile(userId) {
+      try {
+        const { data: { user } } = await supabase?.auth?.getUser();
+        if (!user) return;
+
+        // Use a deterministic tenant ID based on user ID
+        const tenantId = user?.id;
+        const userEmail = user?.email || '';
+        const fullName = user?.user_metadata?.full_name || userEmail?.split('@')[0] || 'User';
+
+        // Step 1: Ensure tenant exists - create one if it doesn't
+        console.log('Checking if tenant exists:', tenantId);
+        
+        const { data: existingTenant, error: tenantCheckError } = await supabase
+          ?.from('tenants')
+          ?.select('id')
+          ?.eq('id', tenantId)
+          ?.single();
+
+        if (!existingTenant && !tenantCheckError) {
+          // Tenant doesn't exist, create it
+          console.log('Creating new tenant for user:', tenantId);
+          
+          const { data: newTenant, error: tenantError } = await supabase
+            ?.from('tenants')
+            ?.insert([{
+              id: tenantId,
+              name: `${fullName}'s Workspace`,
+              code: `tenant-${tenantId.slice(0, 8)}`,
+              status: 'active',
+              subscription_plan: 'professional'
+            }])
+            ?.select()
+            ?.single();
+
+          if (tenantError) {
+            console.error('Failed to create tenant:', tenantError);
+            setError('Failed to create workspace. Please contact support.');
+            return;
+          }
+          console.log('Tenant created successfully:', newTenant.id);
+        }
+
+        // Step 2: Create user profile
+        const newProfile = {
+          id: userId,
+          tenant_id: tenantId,
+          email: userEmail,
+          full_name: fullName,
+          role_code: 'admin', // Default to admin for first user
+          avatar_url: null,
+          department: null,
+          permissions: [],
+          notification_preferences: {}
+        };
+
+        console.log('Creating profile with:', newProfile);
+
+        // Insert and select only the columns we know exist
+        const { data, error: insertError } = await supabase
+          ?.from('user_profiles')
+          ?.insert([newProfile])
+          ?.select('id, tenant_id, email, full_name, role_code, avatar_url, department, permissions, notification_preferences, created_at, updated_at')
+          ?.single();
+
+        if (!insertError && data) {
+          setUserProfile(data);
+          setTenantId(data?.tenant_id);
+          setRoleCode(data?.role_code);
+          setPermissions(data?.permissions || []);
+          console.log('Profile created successfully:', data);
+        } else {
+          console.error('Failed to create profile:', insertError);
+          setError('Failed to create user profile. Please contact support.');
+        }
+      } catch (error) {
+        console.error('Error creating default profile:', error);
+        setError(error?.message || 'Failed to create user profile');
       }
     },
 

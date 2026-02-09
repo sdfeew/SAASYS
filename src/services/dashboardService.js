@@ -1,7 +1,17 @@
 import { supabase } from '../lib/supabase';
 import { errorHandler } from '../utils/errorHandler';
 
+// Simple cache untuk dashboard requests
+const dashboardCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const getCacheKey = (id) => `dashboard_${id}`;
+
 export const dashboardService = {
+  clearCache() {
+    dashboardCache.clear();
+  },
+
   async getAll(tenantId, scope = null) {
     // Build query without relationships
     let query = supabase
@@ -25,14 +35,45 @@ export const dashboardService = {
   },
 
   async getById(id) {
-    const { data, error } = await supabase
-      .from('dashboards')
-      .select('*')
-      .eq('id', id)
-      .single();
+    // Check cache first
+    const cacheKey = getCacheKey(id);
+    const cached = dashboardCache.get(cacheKey);
     
-    if (error) throw error;
-    return data;
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.data;
+    }
+
+    try {
+      // Fetch from API with timeout using Promise.race
+      const { data, error } = await Promise.race([
+        supabase
+          .from('dashboards')
+          .select('*')
+          .eq('id', id)
+          .single(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Request timeout')), 10000)
+        )
+      ]);
+      
+      if (error) {
+        console.error('Dashboard fetch error:', error);
+        throw error;
+      }
+
+      // Cache the result
+      if (data) {
+        dashboardCache.set(cacheKey, {
+          data,
+          timestamp: Date.now()
+        });
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Error fetching dashboard:', err);
+      throw err;
+    }
   },
 
   async create(dashboard) {
@@ -57,31 +98,46 @@ export const dashboardService = {
         supplier_record_id: dashboard.supplierRecordId,
         name: dashboard.name,
         description: dashboard.description,
-        layout_config: dashboard.layoutConfig || {},
-        is_published: false,
+        layout: dashboard.layout || 'grid',
+        layout_config: dashboard.layoutConfig || dashboard.layout_config || {},
+        is_published: dashboard.is_published || false,
+        status: dashboard.status || 'draft',
         created_by: user.id
       })
       .select('*')
       .single();
     
     if (error) throw error;
+    
+    // Invalidate cache
+    dashboardCache.clear();
+    
     return data;
   },
 
   async update(id, dashboard) {
+    const updateData = {
+      name: dashboard.name,
+      description: dashboard.description,
+      layout_config: dashboard.layout_config || dashboard.layoutConfig,
+      is_published: dashboard.is_published !== undefined ? dashboard.is_published : dashboard.isPublished,
+      layout: dashboard.layout || 'grid',
+      status: dashboard.status || 'draft'
+    };
+
     const { data, error } = await supabase
       .from('dashboards')
-      .update({
-        name: dashboard.name,
-        description: dashboard.description,
-        layout_config: dashboard.layoutConfig,
-        is_published: dashboard.isPublished
-      })
+      .update(updateData)
       .eq('id', id)
       .select('*')
       .single();
     
     if (error) throw error;
+    
+    // Invalidate cache
+    const cacheKey = getCacheKey(id);
+    dashboardCache.delete(cacheKey);
+    
     return data;
   },
 
@@ -92,14 +148,36 @@ export const dashboardService = {
       .eq('id', id);
     
     if (error) throw error;
+    
+    // Invalidate cache
+    const cacheKey = getCacheKey(id);
+    dashboardCache.delete(cacheKey);
   },
 
   async publish(id) {
-    return this.update(id, { isPublished: true });
+    // First fetch the dashboard to get current data
+    const dashboard = await this.getById(id);
+    if (!dashboard) throw new Error('Dashboard not found');
+    
+    // Update with is_published flag
+    return this.update(id, {
+      ...dashboard,
+      is_published: true,
+      status: 'published'
+    });
   },
 
   async unpublish(id) {
-    return this.update(id, { isPublished: false });
+    // First fetch the dashboard to get current data
+    const dashboard = await this.getById(id);
+    if (!dashboard) throw new Error('Dashboard not found');
+    
+    // Update with is_published flag
+    return this.update(id, {
+      ...dashboard,
+      is_published: false,
+      status: 'draft'
+    });
   },
 
   // Get dashboards for a specific module

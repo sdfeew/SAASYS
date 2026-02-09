@@ -5,6 +5,7 @@ import ModuleBreadcrumbs from '../../components/ui/ModuleBreadcrumbs';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
 import NotificationBadge from '../../components/ui/NotificationBadge';
 import Icon from '../../components/AppIcon';
+import { useToast } from '../../contexts/ToastContext';
 import RecordHeader from './components/RecordHeader';
 import RecordFormSection from './components/RecordFormSection';
 import AttachmentsTab from './components/AttachmentsTab';
@@ -23,10 +24,10 @@ import { getLangText } from '../../utils/languageUtils';
 const RecordDetailManagement = () => {
   const [searchParams] = useSearchParams();
   const { tenantId, user } = useAuth();
+  const toast = useToast();
   const recordId = searchParams.get('id');
   const moduleId = searchParams.get('moduleId');
   
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('attachments');
   const [loading, setLoading] = useState(true);
@@ -258,18 +259,13 @@ const RecordDetailManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminSidebar isCollapsed={isSidebarCollapsed} />
-      <div className={`transition-smooth ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+    <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex-shrink-0 w-60 lg:w-60 overflow-hidden">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 flex flex-col">
         <header className="bg-card border-b border-border px-4 md:px-6 lg:px-8 py-4 sticky top-0 z-30">
           <div className="flex items-center justify-between gap-4">
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="hidden lg:flex items-center justify-center w-10 h-10 rounded-md hover:bg-muted"
-              aria-label="Toggle sidebar">
-              <Icon name={isSidebarCollapsed ? 'ChevronRight' : 'ChevronLeft'} size={20} />
-            </button>
-
             <div className="flex-1 min-w-0">
               <h2 className="text-lg md:text-xl font-heading font-semibold text-foreground truncate">
                 Record Detail Management

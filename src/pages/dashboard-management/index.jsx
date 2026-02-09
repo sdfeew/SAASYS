@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, Search, Layout, Share2, Trash2, Edit, Eye, Copy } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import AdminSidebar from '../../components/ui/AdminSidebar';
-import ModuleBreadcrumbs from '../../components/ui/ModuleBreadcrumbs';
-import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
-import NotificationBadge from '../../components/ui/NotificationBadge';
-import Button from '../../components/ui/Button';
-import Icon from '../../components/AppIcon';
+import { PageContainer, PageCard, PageSection, PageGrid } from '../../components/layout/PageComponents';
 import DashboardTable from './components/DashboardTable';
 import DashboardModal from './components/DashboardModal';
-import NotificationDropdown from '../../components/ui/NotificationDropdown';
 import { dashboardService } from '../../services/dashboardService';
 
 const DashboardManagement = () => {
   const { tenantId, user } = useAuth();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const toast = useToast();
   const [dashboards, setDashboards] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedDashboard, setSelectedDashboard] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create', 'edit', 'duplicate'
@@ -33,12 +29,12 @@ const DashboardManagement = () => {
   const loadDashboards = async () => {
     try {
       setLoading(true);
-      setError(null);
       const data = await dashboardService.getAll(tenantId);
       setDashboards(data || []);
     } catch (err) {
       console.error('Error loading dashboards:', err);
-      setError('Failed to load dashboards');
+      const errorMsg = err?.message || 'Failed to load dashboards';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -77,9 +73,10 @@ const DashboardManagement = () => {
         setDeleting(true);
         await dashboardService.delete(dashboard.id);
         setDashboards(dashboards.filter(d => d.id !== dashboard.id));
+        toast.success('Dashboard deleted successfully');
       } catch (err) {
         console.error('Error deleting dashboard:', err);
-        setError('Failed to delete dashboard');
+        toast.error('Failed to delete dashboard');
       } finally {
         setDeleting(false);
       }
@@ -95,9 +92,10 @@ const DashboardManagement = () => {
       setDashboards(dashboards.map(d =>
         d.id === dashboard.id ? { ...d, is_published: true } : d
       ));
+      toast.success('Dashboard published');
     } catch (err) {
       console.error('Error publishing dashboard:', err);
-      setError('Failed to publish dashboard');
+      toast.error('Failed to publish dashboard');
     }
   };
 
@@ -110,23 +108,16 @@ const DashboardManagement = () => {
       setDashboards(dashboards.map(d =>
         d.id === dashboard.id ? { ...d, is_published: false } : d
       ));
+      toast.success('Dashboard unpublished');
     } catch (err) {
       console.error('Error unpublishing dashboard:', err);
-      setError('Failed to unpublish dashboard');
+      toast.error('Failed to unpublish dashboard');
     }
   };
 
   const handleShare = async (dashboard) => {
     const shareUrl = `${window.location.origin}/dashboard-viewer?id=${dashboard.id}`;
     
-    // Create share link object
-    const shareLink = {
-      url: shareUrl,
-      dashboard: dashboard.name,
-      createdAt: new Date().toISOString()
-    };
-
-    // Try to use native share API
     if (navigator.share) {
       navigator.share({
         title: `View Dashboard: ${dashboard.name}`,
@@ -134,12 +125,11 @@ const DashboardManagement = () => {
         url: shareUrl
       }).catch(err => console.error('Share error:', err));
     } else {
-      // Fallback: copy to clipboard and show confirmation
       navigator.clipboard.writeText(shareUrl).then(() => {
-        alert(`Share link copied to clipboard!\n\n${shareUrl}`);
+        toast.success('Share link copied to clipboard');
       }).catch(err => {
         console.error('Copy error:', err);
-        alert('Copy link manually:\n\n' + shareUrl);
+        toast.error('Failed to copy link');
       });
     }
   };
@@ -152,22 +142,25 @@ const DashboardManagement = () => {
           tenant_id: tenantId
         });
         setDashboards([newDashboard, ...dashboards]);
+        toast.success('Dashboard created successfully');
       } else if (modalMode === 'edit') {
         await dashboardService.update(selectedDashboard.id, dashboardData);
         setDashboards(dashboards.map(d =>
           d.id === selectedDashboard.id ? { ...d, ...dashboardData } : d
         ));
+        toast.success('Dashboard updated');
       } else if (modalMode === 'duplicate') {
         const newDashboard = await dashboardService.create({
           ...dashboardData,
           tenant_id: tenantId
         });
         setDashboards([newDashboard, ...dashboards]);
+        toast.success('Dashboard duplicated');
       }
       setShowModal(false);
     } catch (err) {
       console.error('Error saving dashboard:', err);
-      setError('Failed to save dashboard');
+      toast.error('Failed to save dashboard');
     }
   };
 
@@ -183,12 +176,12 @@ const DashboardManagement = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen bg-background overflow-hidden">
-        <AdminSidebar isCollapsed={sidebarCollapsed} />
-        <div className={`flex-1 flex items-center justify-center transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+      <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Icon name="Loader2" size={32} className="animate-spin mx-auto mb-2" />
-            <p className="text-muted-foreground">Loading dashboards...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-3" />
+            <p className="text-slate-600">Loading dashboards...</p>
           </div>
         </div>
       </div>
@@ -196,134 +189,90 @@ const DashboardManagement = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <AdminSidebar isCollapsed={sidebarCollapsed} />
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <AdminSidebar />
 
-      <div className={`flex-1 flex flex-col transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-card border-b border-border px-4 md:px-6 py-3 md:py-4">
+        <header className="flex-shrink-0 bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-slate-900">Dashboards</h1>
+              <p className="text-sm text-slate-600 mt-1">Create, edit, and manage your data dashboards</p>
+            </div>
             <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex p-2 rounded-md hover:bg-muted transition-smooth"
-              aria-label="Toggle sidebar"
+              onClick={handleCreate}
+              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              <Icon name="PanelLeftClose" size={20} />
+              <Plus size={18} />
+              New Dashboard
             </button>
-
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg md:text-xl font-heading font-semibold text-foreground truncate">
-                Dashboard Management
-              </h1>
-              <p className="caption text-muted-foreground hidden md:block">
-                Create, edit, and manage your dashboards
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 md:gap-3">
-              <NotificationDropdown />
-              <UserProfileDropdown />
-            </div>
           </div>
         </header>
 
-        {/* Breadcrumbs */}
-        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-border bg-card">
-          <ModuleBreadcrumbs />
-        </div>
-
-        {/* Toolbar */}
-        <div className="px-4 md:px-6 py-4 border-b border-border bg-card space-y-4 md:space-y-0 md:flex md:items-center md:justify-between gap-4">
-          <div className="flex-1 flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Icon name="Search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Search dashboards..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-md border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            {/* Filter */}
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 rounded-md border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="all">All Dashboards</option>
-              <option value="published">Published</option>
-              <option value="draft">Drafts</option>
-            </select>
-          </div>
-
-          {/* Action Buttons */}
-          <Button
-            onClick={handleCreate}
-            iconName="Plus"
-            iconPosition="left"
-            className="whitespace-nowrap"
-          >
-            New Dashboard
-          </Button>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="px-4 md:px-6 py-3 bg-destructive/10 border-b border-destructive/20 flex items-center gap-3">
-            <Icon name="AlertCircle" size={18} className="text-destructive flex-shrink-0" />
-            <p className="text-sm text-destructive">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="ml-auto p-1 hover:bg-destructive/20 rounded transition-smooth"
-            >
-              <Icon name="X" size={16} className="text-destructive" />
-            </button>
-          </div>
-        )}
-
         {/* Content */}
-        <div className="flex-1 overflow-auto scrollbar-custom">
+        <PageContainer>
+          {/* Search & Filter */}
+          <PageSection title="">
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search dashboards..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+              >
+                <option value="all">All</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </div>
+          </PageSection>
+
+          {/* Dashboards Grid */}
           {filteredDashboards.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <Icon name="Layout" size={48} className="mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+            <PageCard>
+              <div className="text-center py-8">
+                <Layout className="mx-auto text-slate-400 mb-3" size={32} />
+                <p className="text-slate-600">
                   {searchTerm || filterStatus !== 'all' ? 'No dashboards found' : 'No dashboards yet'}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-6">
-                  {searchTerm || filterStatus !== 'all' 
-                    ? 'Try adjusting your search or filter'
-                    : 'Create your first dashboard to get started'}
                 </p>
                 {!searchTerm && filterStatus === 'all' && (
-                  <Button
+                  <button
                     onClick={handleCreate}
-                    iconName="Plus"
-                    iconPosition="left"
+                    className="mt-4 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
+                    <Plus size={16} />
                     Create Dashboard
-                  </Button>
+                  </button>
                 )}
               </div>
-            </div>
+            </PageCard>
           ) : (
-            <DashboardTable
-              dashboards={filteredDashboards}
-              onView={handleView}
-              onEdit={handleEdit}
-              onEditInBuilder={handleEditInBuilder}
-              onDuplicate={handleDuplicate}
-              onDelete={handleDelete}
-              onPublish={handlePublish}
-              onUnpublish={handleUnpublish}
-              onShare={handleShare}
-              deleting={deleting}
-            />
+            <PageGrid cols={1}>
+              <DashboardTable
+                dashboards={filteredDashboards}
+                onView={handleView}
+                onEdit={handleEdit}
+                onEditInBuilder={handleEditInBuilder}
+                onDuplicate={handleDuplicate}
+                onDelete={handleDelete}
+                onPublish={handlePublish}
+                onUnpublish={handleUnpublish}
+                onShare={handleShare}
+                deleting={deleting}
+              />
+            </PageGrid>
           )}
-        </div>
+        </PageContainer>
       </div>
 
       {/* Modal */}

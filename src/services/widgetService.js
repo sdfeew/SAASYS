@@ -17,11 +17,12 @@ export const widgetService = {
     const { data, error } = await supabase
       ?.from('dashboard_widgets')
       ?.select('*, data_source:data_sources(*)')
-      ?.eq('id', id)
-      ?.single();
+      ?.eq('id', id);
     
     if (error) throw error;
-    return data;
+    
+    // Return first match or null if not found
+    return data?.[0] || null;
   },
 
   async create(dashboardId, widget) {
@@ -92,7 +93,9 @@ export const widgetService = {
     try {
       // Get widget configuration
       const widget = await this.getById(widgetId);
-      if (!widget) throw new Error('Widget not found');
+      if (!widget) {
+        throw new Error('Widget not found or has been deleted');
+      }
 
       // Get data source
       const dataSource = widget?.data_source;
@@ -127,6 +130,7 @@ export const widgetService = {
             value: values?.reduce((a, b) => a + b, 0)
           };
         }
+        return { value: 0 };
       } else if (widget?.type === 'table') {
         // For table widgets, return rows
         return {

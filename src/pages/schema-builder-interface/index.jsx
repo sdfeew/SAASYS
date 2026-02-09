@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { moduleService } from '../../services/moduleService';
 import { fieldService } from '../../services/fieldService';
-import { Plus, Edit2, Trash2, Check, X, Database, Bell } from 'lucide-react';
+import { Plus, Edit2, Trash2, Check, X, Database, Bell, Link2, GitBranch, Grid3x3, Eye, EyeOff, Zap, ArrowRight, Settings, Copy } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
@@ -36,10 +37,10 @@ const DATA_TYPES = [
 
 const SchemaBuilderInterface = () => {
   const { tenantId } = useAuth();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const toast = useToast();
   const [showPreview, setShowPreview] = useState(true);
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
-  const [moduleTypeForForm, setModuleTypeForForm] = useState('sub'); // Track if creating main or sub
+  const [moduleTypeForForm, setModuleTypeForForm] = useState('sub');
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isFieldFormOpen, setIsFieldFormOpen] = useState(false);
   const [editingField, setEditingField] = useState(null);
@@ -48,6 +49,11 @@ const SchemaBuilderInterface = () => {
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showRelationships, setShowRelationships] = useState(false);
+  const [relationships, setRelationships] = useState([]);
+  const [isRelationshipModalOpen, setIsRelationshipModalOpen] = useState(false);
+  const [editingRelationship, setEditingRelationship] = useState(null);
+  const [activeTab, setActiveTab] = useState('fields'); // 'fields', 'relationships', 'settings'
 
   // Load modules on mount and when tenant changes
   useEffect(() => {
@@ -331,29 +337,69 @@ const SchemaBuilderInterface = () => {
     }
   };
 
+  // Relationship Management Functions
+  const handleAddRelationship = () => {
+    setEditingRelationship(null);
+    setIsRelationshipModalOpen(true);
+  };
+
+  const handleEditRelationship = (relationship) => {
+    setEditingRelationship(relationship);
+    setIsRelationshipModalOpen(true);
+  };
+
+  const handleSaveRelationship = (relationshipData) => {
+    try {
+      setSaving(true);
+      
+      if (editingRelationship) {
+        // Update existing relationship
+        setRelationships(relationships.map(r => 
+          r.id === editingRelationship.id ? { ...relationshipData, id: r.id } : r
+        ));
+      } else {
+        // Create new relationship
+        const newRelationship = {
+          id: `rel_${Date.now()}`,
+          ...relationshipData,
+          createdAt: new Date().toISOString()
+        };
+        setRelationships([...relationships, newRelationship]);
+      }
+      
+      setIsRelationshipModalOpen(false);
+      setEditingRelationship(null);
+      toast?.success(editingRelationship ? 'Relationship updated' : 'Relationship created');
+    } catch (error) {
+      toast?.error('Error saving relationship');
+      console.error('Error:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteRelationship = (relationshipId) => {
+    if (window.confirm('Delete this relationship?')) {
+      setRelationships(relationships.filter(r => r.id !== relationshipId));
+      toast?.success('Relationship deleted');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex">
-      <AdminSidebar isCollapsed={isSidebarCollapsed} />
-      <div className={`flex-1 flex flex-col transition-smooth ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+      <div className="flex-shrink-0 w-60 lg:w-60 overflow-hidden">
+        <AdminSidebar />
+      </div>
+      <div className="flex-1 flex flex-col">
         <header className="sticky top-0 z-30 bg-card border-b border-border shadow-elevation-1">
           <div className="flex items-center justify-between px-4 md:px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                iconName={isSidebarCollapsed ? 'PanelLeftOpen' : 'PanelLeftClose'}
-                onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="hidden lg:flex"
-                aria-label="Toggle sidebar"
-              />
-              <div>
-                <h1 className="text-xl md:text-2xl font-heading font-semibold text-foreground">
-                  Schema Builder
-                </h1>
-                <p className="caption text-muted-foreground hidden sm:block">
-                  Create and configure custom modules and fields
-                </p>
-              </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-heading font-semibold text-foreground">
+                Schema Builder
+              </h1>
+              <p className="caption text-muted-foreground hidden sm:block">
+                Create and configure custom modules and fields
+              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -401,7 +447,7 @@ const SchemaBuilderInterface = () => {
                             </h2>
                           </div>
                           <p className="caption text-muted-foreground">
-                            Configure fields and validation rules
+                            Advanced schema configuration with relationships
                           </p>
                         </>
                       ) : (
@@ -410,7 +456,7 @@ const SchemaBuilderInterface = () => {
                             Select a Module
                           </h2>
                           <p className="caption text-muted-foreground">
-                            Choose a module from the left panel to start building
+                            Choose a module to configure fields and relationships
                           </p>
                         </>
                       )}
@@ -427,6 +473,14 @@ const SchemaBuilderInterface = () => {
                           className="hidden lg:flex"
                         >
                           {showPreview ? 'Hide' : 'Show'} Preview
+                        </Button>
+                        <Button
+                          variant={activeTab === 'relationships' ? 'default' : 'outline'}
+                          size="sm"
+                          iconName="Link2"
+                          onClick={() => setActiveTab('relationships')}
+                        >
+                          Relations ({relationships.length})
                         </Button>
                         <Button
                           variant="outline"
@@ -450,37 +504,196 @@ const SchemaBuilderInterface = () => {
                       </div>
                     )}
                   </div>
+
+                  {selectedModule && (
+                    <div className="flex gap-1 mt-4 border-b border-border">
+                      <button
+                        onClick={() => setActiveTab('fields')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                          activeTab === 'fields'
+                            ? 'text-primary border-primary'
+                            : 'text-muted-foreground border-transparent hover:text-foreground'
+                        }`}
+                      >
+                        Fields ({fields.length})
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('relationships')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                          activeTab === 'relationships'
+                            ? 'text-primary border-primary'
+                            : 'text-muted-foreground border-transparent hover:text-foreground'
+                        }`}
+                      >
+                        <Link2 size={14} className="inline mr-1" />
+                        Relationships ({relationships.length})
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('settings')}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                          activeTab === 'settings'
+                            ? 'text-primary border-primary'
+                            : 'text-muted-foreground border-transparent hover:text-foreground'
+                        }`}
+                      >
+                        <Settings size={14} className="inline mr-1" />
+                        Settings
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1 overflow-hidden flex">
                   <div className={`flex-1 overflow-y-auto scrollbar-custom p-4 md:p-6 ${showPreview ? 'lg:w-1/2' : 'w-full'}`}>
                     {selectedModule ? (
                       <>
-                        {isFieldFormOpen ? (
-                          <div className="bg-card border border-border rounded-lg p-4 md:p-6">
-                            <h3 className="text-lg font-heading font-semibold text-foreground mb-6">
-                              {editingField ? 'Edit Field' : 'Add New Field'}
-                            </h3>
-                            <FieldConfigurationForm
-                              field={editingField}
-                              onSave={handleSaveField}
-                              onCancel={() => {
-                                setIsFieldFormOpen(false);
-                                setEditingField(null);
-                              }}
-                              allFields={fields}
-                              disabled={saving}
-                            />
+                        {activeTab === 'fields' && (
+                          <>
+                            {isFieldFormOpen ? (
+                              <div className="bg-card border border-border rounded-lg p-4 md:p-6">
+                                <h3 className="text-lg font-heading font-semibold text-foreground mb-6">
+                                  {editingField ? 'Edit Field' : 'Add New Field'}
+                                </h3>
+                                <FieldConfigurationForm
+                                  field={editingField}
+                                  onSave={handleSaveField}
+                                  onCancel={() => {
+                                    setIsFieldFormOpen(false);
+                                    setEditingField(null);
+                                  }}
+                                  allFields={fields}
+                                  disabled={saving}
+                                />
+                              </div>
+                            ) : (
+                              <FieldListManager
+                                fields={fields}
+                                onEditField={handleEditField}
+                                onDeleteField={handleDeleteField}
+                                onReorderFields={handleReorderFields}
+                                onAddField={handleAddField}
+                                disabled={saving}
+                              />
+                            )}
+                          </>
+                        )}
+
+                        {activeTab === 'relationships' && (
+                          <div className="space-y-4">
+                            <div className="flex justify-between items-center mb-6">
+                              <h3 className="text-lg font-heading font-semibold text-foreground">
+                                Table Relationships
+                              </h3>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                iconName="Plus"
+                                onClick={handleAddRelationship}
+                                disabled={saving}
+                              >
+                                Add Relationship
+                              </Button>
+                            </div>
+
+                            {relationships.length === 0 ? (
+                              <div className="bg-muted/30 border border-border rounded-lg p-8 text-center">
+                                <Link2 size={40} className="mx-auto text-muted-foreground mb-4 opacity-50" />
+                                <h4 className="text-foreground font-medium mb-2">No relationships yet</h4>
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  Create relationships to link data between tables
+                                </p>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  iconName="Plus"
+                                  onClick={handleAddRelationship}
+                                >
+                                  Create Relationship
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {relationships.map(rel => (
+                                  <div key={rel.id} className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1">
+                                        <div className="flex items-center gap-3">
+                                          <div className="flex items-center gap-2 text-sm font-medium">
+                                            <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">{rel.fromModule}</span>
+                                            <ArrowRight size={18} className="text-muted-foreground" />
+                                            <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs">{rel.toModule}</span>
+                                          </div>
+                                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                                            {rel.type}
+                                          </span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-2">
+                                          {rel.fromField} → {rel.toField}
+                                        </p>
+                                        {rel.description && (
+                                          <p className="text-xs text-muted-foreground mt-1">{rel.description}</p>
+                                        )}
+                                      </div>
+                                      <div className="flex gap-2 ml-4">
+                                        <button
+                                          onClick={() => handleEditRelationship(rel)}
+                                          className="p-2 hover:bg-muted rounded transition-colors"
+                                        >
+                                          <Edit2 size={16} className="text-muted-foreground" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteRelationship(rel.id)}
+                                          className="p-2 hover:bg-red-100 rounded transition-colors"
+                                        >
+                                          <Trash2 size={16} className="text-red-500" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        ) : (
-                          <FieldListManager
-                            fields={fields}
-                            onEditField={handleEditField}
-                            onDeleteField={handleDeleteField}
-                            onReorderFields={handleReorderFields}
-                            onAddField={handleAddField}
-                            disabled={saving}
-                          />
+                        )}
+
+                        {activeTab === 'settings' && (
+                          <div className="space-y-6">
+                            <div className="bg-card border border-border rounded-lg p-6">
+                              <h4 className="text-base font-semibold text-foreground mb-4">Module Settings</h4>
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="text-sm font-medium text-foreground">Module Name</label>
+                                  <Input type="text" value={selectedModule?.name} disabled className="mt-2" />
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-foreground">Module Code</label>
+                                  <Input type="text" value={selectedModule?.code} disabled className="mt-2" />
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium text-foreground">Description</label>
+                                  <textarea disabled value={selectedModule?.description} className="w-full mt-2 p-2 rounded border border-border text-sm" rows="3" />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
+                              <h4 className="text-base font-semibold text-blue-900 mb-2">Schema Stats</h4>
+                              <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                  <div className="text-2xl font-bold text-blue-600">{fields.length}</div>
+                                  <div className="text-xs text-blue-700">Fields</div>
+                                </div>
+                                <div>
+                                  <div className="text-2xl font-bold text-blue-600">{relationships.length}</div>
+                                  <div className="text-xs text-blue-700">Relationships</div>
+                                </div>
+                                <div>
+                                  <div className="text-2xl font-bold text-blue-600">100%</div>
+                                  <div className="text-xs text-blue-700">Coverage</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         )}
                       </>
                     ) : (
@@ -492,7 +705,7 @@ const SchemaBuilderInterface = () => {
                           No Module Selected
                         </h3>
                         <p className="text-sm md:text-base text-muted-foreground mb-6 max-w-md">
-                          Select a module from the navigation panel to start configuring fields and validation rules.
+                          Select a module from the navigation panel to start configuring fields and relationships.
                         </p>
                         <Button
                           variant="default"
@@ -533,6 +746,95 @@ const SchemaBuilderInterface = () => {
         fieldCount={fields?.length}
         disabled={saving}
       />
+      {isRelationshipModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-card border border-border rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-heading font-semibold text-foreground mb-4">
+              {editingRelationship ? 'Edit Relationship' : 'Create Relationship'}
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-foreground">Relationship Type</label>
+                <Select
+                  options={[
+                    { value: 'one-to-many', label: 'One to Many' },
+                    { value: 'many-to-one', label: 'Many to One' },
+                    { value: 'many-to-many', label: 'Many to Many' },
+                    { value: 'one-to-one', label: 'One to One' }
+                  ]}
+                  onChange={(e) => setEditingRelationship({ ...editingRelationship, type: e.target.value })}
+                  value={editingRelationship?.type || 'one-to-many'}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">From Module</label>
+                <Select
+                  options={modules.flatMap(m => m.subModules.map(s => ({ value: s.id, label: `${m.name} > ${s.name}` })))}
+                  onChange={(e) => setEditingRelationship({ ...editingRelationship, fromModule: e.target.value })}
+                  value={editingRelationship?.fromModule || ''}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">From Field</label>
+                <Input 
+                  placeholder="Enter field name"
+                  value={editingRelationship?.fromField || ''}
+                  onChange={(e) => setEditingRelationship({ ...editingRelationship, fromField: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">To Module</label>
+                <Select
+                  options={modules.flatMap(m => m.subModules.map(s => ({ value: s.id, label: `${m.name} > ${s.name}` })))}
+                  onChange={(e) => setEditingRelationship({ ...editingRelationship, toModule: e.target.value })}
+                  value={editingRelationship?.toModule || ''}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">To Field</label>
+                <Input 
+                  placeholder="Enter field name"
+                  value={editingRelationship?.toField || ''}
+                  onChange={(e) => setEditingRelationship({ ...editingRelationship, toField: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">Description (Optional)</label>
+                <textarea 
+                  placeholder="Describe this relationship..."
+                  value={editingRelationship?.description || ''}
+                  onChange={(e) => setEditingRelationship({ ...editingRelationship, description: e.target.value })}
+                  className="w-full p-2 border border-border rounded text-sm mt-1"
+                  rows="3"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setIsRelationshipModalOpen(false)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => handleSaveRelationship(editingRelationship)}
+                disabled={saving}
+              >
+                {editingRelationship ? 'Update' : 'Create'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

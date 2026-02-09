@@ -1,3 +1,3 @@
-import LookerStudioBuilder from './LookerStudioBuilder';
+import DashboardBuilderAdvanced from './DashboardBuilderAdvanced';
 
-export default LookerStudioBuilder;
+export default DashboardBuilderAdvanced;

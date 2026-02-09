@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AdminSidebar from '../../components/ui/AdminSidebar';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -12,6 +13,7 @@ import { errorHandler } from '../../utils/errorHandler';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 const DashboardManagementEnhanced = () => {
+  const navigate = useNavigate();
   const { user, tenantId } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [dashboards, setDashboards] = useState([]);
@@ -181,8 +183,18 @@ const DashboardManagementEnhanced = () => {
                   </div>
                   <p className="text-xs text-slate-500 mb-4">Layout: {dashboard.layout || 'Grid'}</p>
                   <div className="flex gap-2">
+                    {dashboard.status === 'published' && (
+                      <Button
+                        onClick={() => navigate(`/dashboard-viewer?id=${dashboard.id}`)}
+                        size="sm"
+                        variant="default"
+                        className="flex-1"
+                      >
+                        View
+                      </Button>
+                    )}
                     <Button
-                      onClick={() => setEditingDashboard(dashboard)}
+                      onClick={() => navigate(`/dashboard-builder-studio?id=${dashboard.id}`)}
                       size="sm"
                       variant="secondary"
                       className="flex-1"

@@ -1,1 +1,1 @@
-export { default } from './TeamCollaboration';
+export { default } from './Collaboration';

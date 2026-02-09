@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import AdminSidebar from '../../components/ui/AdminSidebar';
 import ModuleBreadcrumbs from '../../components/ui/ModuleBreadcrumbs';
 import UserProfileDropdown from '../../components/ui/UserProfileDropdown';
-
+import { useToast } from '../../contexts/ToastContext';
 import Icon from '../../components/AppIcon';
 import ModuleHeader from './components/ModuleHeader';
 import FilterToolbar from './components/FilterToolbar';
@@ -22,8 +22,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 const DynamicModuleListView = () => {
   const { user, tenantId } = useAuth();
+  const toast = useToast();
   const [searchParams] = useSearchParams();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRows, setSelectedRows] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -644,8 +644,8 @@ const DynamicModuleListView = () => {
   if (loading) {
     return (
       <div className="flex h-screen bg-background overflow-hidden">
-        <AdminSidebar isCollapsed={sidebarCollapsed} />
-        <div className={`flex-1 flex items-center justify-center transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Icon name="Loader2" size={32} className="animate-spin mx-auto mb-2" />
             <p className="text-muted-foreground">Loading records...</p>
@@ -657,32 +657,10 @@ const DynamicModuleListView = () => {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      <AdminSidebar isCollapsed={sidebarCollapsed} />
-      <div className={`flex-1 flex flex-col transition-smooth ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-60'}`}>
+      <AdminSidebar />
+      <div className="flex-1 flex flex-col">
         <header className="bg-card border-b border-border px-4 md:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:flex items-center justify-center w-10 h-10 rounded-md hover:bg-muted transition-smooth"
-              aria-label="Toggle sidebar"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-foreground"
-              >
-                <line x1="3" y1="12" x2="21" y2="12" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <line x1="3" y1="18" x2="21" y2="18" />
-              </svg>
-            </button>
-            
             <div className="flex-1 lg:flex-none">
               <ModuleBreadcrumbs />
             </div>
