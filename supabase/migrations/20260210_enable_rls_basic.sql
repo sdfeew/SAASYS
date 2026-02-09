@@ -4,26 +4,42 @@
 -- Enable RLS on tenants table
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 
--- Tenants: Users can only see their own tenant
-CREATE POLICY "Users see own tenant" ON tenants
+-- Authenticated users can see all tenants (for login/selection)
+CREATE POLICY "Authenticated users see all tenants" ON tenants
   FOR SELECT USING (
-    id = (SELECT tenant_id FROM user_profiles WHERE id = auth.uid())
+    auth.role() = 'authenticated'
   );
 
--- Admins can update their own tenant
+-- Users can update their own tenant if they're admin
 CREATE POLICY "Admins update own tenant" ON tenants
   FOR UPDATE USING (
-    id = (SELECT tenant_id FROM user_profiles WHERE id = auth.uid())
-    AND (SELECT role_code FROM user_profiles WHERE id = auth.uid()) = 'admin'
+    EXISTS (
+      SELECT 1 FROM public.user_profiles
+      WHERE user_profiles.id = auth.uid()
+      AND user_profiles.tenant_id = tenants.id
+      AND user_profiles.role_code = 'admin'
+    )
   );
 
 -- Enable RLS on user_profiles table
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
--- Users can see profiles in their tenant
-CREATE POLICY "Users see tenant profiles" ON user_profiles
+-- Users can see their own profile
+CREATE POLICY "Users see own profile" ON user_profiles
+  FOR SELECT USING (
+    id = auth.uid()
+  );
+
+-- Users can see other profiles in their tenant
+CREATE POLICY "Users see tenant member profiles" ON user_profiles
   FOR SELECT USING (
     tenant_id = (SELECT tenant_id FROM user_profiles WHERE id = auth.uid())
+  );
+
+-- Users can insert their own profile (first login)
+CREATE POLICY "Users insert own profile" ON user_profiles
+  FOR INSERT WITH CHECK (
+    id = auth.uid()
   );
 
 -- Users can update their own profile
@@ -32,11 +48,15 @@ CREATE POLICY "Users update own profile" ON user_profiles
     id = auth.uid()
   );
 
--- Admins can update profiles in their tenant
-CREATE POLICY "Admins update tenant profiles" ON user_profiles
-  FOR UPDATE USING (
-    tenant_id = (SELECT tenant_id FROM user_profiles WHERE id = auth.uid())
-    AND (SELECT role_code FROM user_profiles WHERE id = auth.uid()) = 'admin'
+-- Admins can manage profiles in their tenant
+CREATE POLICY "Admins manage tenant profiles" ON user_profiles
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.tenant_id = user_profiles.tenant_id
+      AND up.role_code = 'admin'
+    )
   );
 
 -- Grant basic permissions
