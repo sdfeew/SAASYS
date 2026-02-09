@@ -4,7 +4,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
-import Icon from '../../components/AppIcon';
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -164,8 +163,8 @@ const LoginPage = () => {
       <div className="w-full max-w-md mx-4 relative z-10">
         {/* Header Section */}
         <div className="text-center mb-12 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 mb-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
-            <Icon name="Building2" className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 mb-6 shadow-lg hover:shadow-xl transition-shadow duration-300 text-3xl">
+            🏢
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-900 to-indigo-900 bg-clip-text text-transparent mb-2">
             TenantFlow
@@ -184,7 +183,7 @@ const LoginPage = () => {
           {successMessage && (
             <div className="mb-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl animate-slide-down">
               <div className="flex gap-3 items-center">
-                <Icon name="CheckCircle2" className="w-5 h-5 text-green-600 flex-shrink-0 animate-bounce" />
+                <span className="text-xl">✓</span>
                 <p className="text-green-700 text-sm font-medium">{successMessage}</p>
               </div>
             </div>
@@ -194,7 +193,7 @@ const LoginPage = () => {
           {(localError || error) && (
             <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl animate-shake">
               <div className="flex gap-3">
-                <Icon name="AlertCircle" className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <span className="text-xl">⚠️</span>
                 <div>
                   <p className="text-red-900 text-sm font-semibold">Authentication Error</p>
                   <p className="text-red-700 text-sm mt-1">{localError || error}</p>
@@ -209,8 +208,7 @@ const LoginPage = () => {
             <div className="group">
               <label className="block text-sm font-semibold text-slate-900 mb-2 transition-colors group-focus-within:text-blue-600">
                 <span className="flex items-center gap-2">
-                  <Icon name="Building" className="w-4 h-4" />
-                  Organization
+                  🏢 Organization
                 </span>
               </label>
               <div className="relative">
@@ -228,7 +226,7 @@ const LoginPage = () => {
                 {focusedField === 'tenant' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-b-lg"></div>}
               </div>
               <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
-                <Icon name="Info" className="w-3 h-3" /> Case-insensitive search
+                ℹ️ Case-insensitive search
               </p>
             </div>
 
@@ -236,8 +234,7 @@ const LoginPage = () => {
             <div className="group">
               <label className="block text-sm font-semibold text-slate-900 mb-2 transition-colors group-focus-within:text-blue-600">
                 <span className="flex items-center gap-2">
-                  <Icon name="Mail" className="w-4 h-4" />
-                  Email Address
+                  ✉️ Email Address
                 </span>
               </label>
               <div className="relative">
@@ -261,8 +258,7 @@ const LoginPage = () => {
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-semibold text-slate-900 transition-colors group-focus-within:text-blue-600">
                   <span className="flex items-center gap-2">
-                    <Icon name="Lock" className="w-4 h-4" />
-                    Password
+                    🔒 Password
                   </span>
                 </label>
                 <Link

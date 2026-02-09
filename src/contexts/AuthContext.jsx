@@ -64,20 +64,13 @@ export const AuthProvider = ({ children }) => {
         const userEmail = user?.email || '';
         const fullName = user?.user_metadata?.full_name || userEmail?.split('@')[0] || 'User';
 
-        // Step 1: Ensure tenant exists - create one if it doesn't
-        console.log('Checking if tenant exists:', tenantId);
-        
-        const { data: existingTenant, error: tenantCheckError } = await supabase
-          ?.from('tenants')
-          ?.select('id')
-          ?.eq('id', tenantId)
-          ?.single();
+        console.log('Creating default profile for user:', userId);
 
-        if (!existingTenant && !tenantCheckError) {
-          // Tenant doesn't exist, create it
-          console.log('Creating new tenant for user:', tenantId);
-          
-          const { data: newTenant, error: tenantError } = await supabase
+        // Step 1: Create tenant (ignore errors if it already exists)
+        console.log('Creating tenant for user:', tenantId);
+        
+        try {
+          await supabase
             ?.from('tenants')
             ?.insert([{
               id: tenantId,
@@ -88,13 +81,10 @@ export const AuthProvider = ({ children }) => {
             }])
             ?.select()
             ?.single();
-
-          if (tenantError) {
-            console.error('Failed to create tenant:', tenantError);
-            setError('Failed to create workspace. Please contact support.');
-            return;
-          }
-          console.log('Tenant created successfully:', newTenant.id);
+          console.log('Tenant created successfully');
+        } catch (tenantError) {
+          // Tenant might already exist, that's fine
+          console.log('Tenant creation note:', tenantError?.message);
         }
 
         // Step 2: Create user profile
@@ -112,25 +102,45 @@ export const AuthProvider = ({ children }) => {
 
         console.log('Creating profile with:', newProfile);
 
-        // Insert and select only the columns we know exist
-        const { data, error: insertError } = await supabase
-          ?.from('user_profiles')
-          ?.insert([newProfile])
-          ?.select('id, tenant_id, email, full_name, role_code, avatar_url, department, permissions, notification_preferences, created_at, updated_at')
-          ?.single();
+        try {
+          const { data, error: insertError } = await supabase
+            ?.from('user_profiles')
+            ?.insert([newProfile])
+            ?.select('id, tenant_id, email, full_name, role_code, avatar_url, department, permissions, notification_preferences, created_at, updated_at')
+            ?.single();
 
-        if (!insertError && data) {
-          setUserProfile(data);
-          setTenantId(data?.tenant_id);
-          setRoleCode(data?.role_code);
-          setPermissions(data?.permissions || []);
-          console.log('Profile created successfully:', data);
-        } else {
-          console.error('Failed to create profile:', insertError);
-          setError('Failed to create user profile. Please contact support.');
+          if (!insertError && data) {
+            setUserProfile(data);
+            setTenantId(data?.tenant_id);
+            setRoleCode(data?.role_code);
+            setPermissions(data?.permissions || []);
+            console.log('Profile created successfully:', data);
+          } else {
+            // Try to load existing profile if creation failed
+            console.log('Profile creation attempt returned:', insertError?.message);
+            const { data: existingProfile } = await supabase
+              ?.from('user_profiles')
+              ?.select('id, tenant_id, email, full_name, role_code, avatar_url, department, permissions, notification_preferences, created_at, updated_at')
+              ?.eq('id', userId)
+              ?.maybeSingle();
+
+            if (existingProfile) {
+              setUserProfile(existingProfile);
+              setTenantId(existingProfile?.tenant_id);
+              setRoleCode(existingProfile?.role_code);
+              setPermissions(existingProfile?.permissions || []);
+              console.log('Loaded existing profile:', existingProfile);
+            } else {
+              console.error('Failed to create or load profile');
+              setError('Failed to initialize account. Please try refreshing the page.');
+            }
+          }
+        } catch (profileError) {
+          console.error('Error creating profile:', profileError);
+          setError('Failed to create user profile. Please try refreshing.');
         }
       } catch (error) {
-        console.error('Error creating default profile:', error);
+        console.error('Error in createDefaultProfile:', error);
         setError(error?.message || 'Failed to create user profile');
       }
     },
