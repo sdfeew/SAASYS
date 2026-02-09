@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Icon from '../../components/AppIcon';
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { signIn, loading, error } = useAuth();
+  const { signIn, updateProfile, loading, error } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    tenant: ''
   });
   
   const [localError, setLocalError] = useState(null);
@@ -31,21 +33,85 @@ const LoginPage = () => {
     setIsSubmitting(true);
     setLocalError(null);
 
-    if (!formData.email || !formData.password) {
-      setLocalError('Please fill in all fields');
+    if (!formData.email || !formData.password || !formData.tenant) {
+      setLocalError('Please fill in all fields including tenant');
       setIsSubmitting(false);
       return;
     }
 
-    const { data, error } = await signIn(formData.email, formData.password);
+    try {
+      // Step 1: Sign in with email and password
+      const { data, error } = await signIn(formData.email, formData.password);
 
-    if (error) {
-      setLocalError(error?.message || 'Failed to sign in');
-    } else if (data?.user) {
-      navigate('/auth/tenant-selector');
+      if (error) {
+        setLocalError(error?.message || 'Failed to sign in');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!data?.user) {
+        setLocalError('Sign in failed');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 2: Verify and resolve tenant (by name or ID)
+      let tenantData = null;
+      const tenantInput = formData.tenant.trim();
+
+      // Try to find tenant by ID first
+      const { data: tenantById, error: tenantByIdError } = await supabase
+        ?.from('tenants')
+        ?.select('id, name')
+        ?.eq('id', tenantInput)
+        ?.single();
+
+      if (tenantById) {
+        tenantData = tenantById;
+      } else {
+        // Try to find tenant by name or code
+        const { data: tenantByName, error: tenantByNameError } = await supabase
+          ?.from('tenants')
+          ?.select('id, name')
+          ?.or(`name.eq.${tenantInput},code.eq.${tenantInput}`)
+          ?.single();
+
+        if (tenantByName) {
+          tenantData = tenantByName;
+        }
+      }
+
+      if (!tenantData) {
+        setLocalError('Tenant not found. Please check the tenant name or ID.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 3: Verify user belongs to this tenant
+      const { data: userProfile, error: profileError } = await supabase
+        ?.from('user_profiles')
+        ?.select('*')
+        ?.eq('id', data.user.id)
+        ?.eq('tenant_id', tenantData.id)
+        ?.single();
+
+      if (profileError || !userProfile) {
+        setLocalError('You do not have access to this tenant.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Step 4: Update profile to set current tenant and redirect
+      await updateProfile({ tenant_id: tenantData.id });
+      
+      // Redirect to dashboard
+      navigate('/');
+    } catch (err) {
+      console.error('Login error:', err);
+      setLocalError(err?.message || 'An error occurred during login');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   return (
@@ -62,17 +128,43 @@ const LoginPage = () => {
 
         {/* Form Card */}
         <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">Welcome Back</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Sign In</h2>
+          <p className="text-slate-600 text-sm mb-6">
+            Enter your organization, email, and password to access your workspace
+          </p>
 
           {/* Error Messages */}
           {(localError || error) && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800 text-sm font-medium">{localError || error}</p>
+              <div className="flex gap-3">
+                <Icon name="AlertCircle" className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-red-800 text-sm font-medium">Login Failed</p>
+                  <p className="text-red-700 text-sm mt-1">{localError || error}</p>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-900 mb-2">
+                Organization Name or ID
+              </label>
+              <Input
+                type="text"
+                name="tenant"
+                value={formData.tenant}
+                onChange={handleChange}
+                placeholder="e.g., Acme Corp or tenant-id"
+                disabled={isSubmitting}
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Enter your organization's name or identifier
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-slate-900 mb-2">
                 Email Address
