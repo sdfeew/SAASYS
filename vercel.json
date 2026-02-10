@@ -4,6 +4,7 @@
   "installCommand": "npm install",
   "framework": "vite",
   "outputDirectory": "dist",
+  "postBuildCommand": "node scripts/run-rls-migration.js || true",
   "rewrites": [
     {
       "source": "/(.*)",

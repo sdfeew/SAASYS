@@ -61,13 +61,18 @@ if (SUPABASE_SERVICE_KEY) {
 
       if (response.ok) {
         console.log('✅ RLS migration executed successfully!\n');
+        process.exit(0);
       } else {
         console.log('⚠️  Migration response:', response.status);
         console.log('   Note: Some errors are expected (like policies already existing)\n');
+        process.exit(0);
       }
     } catch (error) {
       console.log('⚠️  Migration note:', error.message);
       console.log('   If migration failed, run it manually on Supabase Dashboard\n');
+      process.exit(0);
     }
   })();
+} else {
+  process.exit(0);
 }

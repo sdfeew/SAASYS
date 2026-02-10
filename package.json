@@ -59,7 +59,7 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "vite build --sourcemap && node scripts/run-rls-migration.js",
+    "build": "vite build --sourcemap",
     "serve": "vite preview",
     "create-test-users": "node scripts/create-test-users.js",
     "create-modules": "node scripts/create-modules.js",
