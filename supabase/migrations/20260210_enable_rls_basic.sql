@@ -61,12 +61,6 @@ CREATE POLICY "Users see own profile" ON user_profiles
     id = auth.uid()
   );
 
--- Users can see other profiles in their tenant
-CREATE POLICY "Users see tenant member profiles" ON user_profiles
-  FOR SELECT USING (
-    tenant_id = (SELECT tenant_id FROM user_profiles WHERE id = auth.uid())
-  );
-
 -- Users can insert their own profile (first login)
 CREATE POLICY "Users insert own profile" ON user_profiles
   FOR INSERT WITH CHECK (
@@ -77,17 +71,6 @@ CREATE POLICY "Users insert own profile" ON user_profiles
 CREATE POLICY "Users update own profile" ON user_profiles
   FOR UPDATE USING (
     id = auth.uid()
-  );
-
--- Admins can manage profiles in their tenant
-CREATE POLICY "Admins manage tenant profiles" ON user_profiles
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM public.user_profiles up
-      WHERE up.id = auth.uid()
-      AND up.tenant_id = user_profiles.tenant_id
-      AND up.role_code = 'admin'
-    )
   );
 
 -- Grant basic permissions

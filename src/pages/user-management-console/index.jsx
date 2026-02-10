@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Icon from '../../components/AppIcon';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
@@ -189,7 +188,7 @@ const UserManagementConsole = () => {
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Icon name="Loader2" size={32} className="animate-spin mx-auto mb-2" />
+            <div className="text-4xl animate-spin mx-auto mb-2">⏳</div>
             <p className="text-muted-foreground">Loading users...</p>
           </div>
         </div>
@@ -207,7 +206,7 @@ const UserManagementConsole = () => {
           <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
             <div className="flex items-center gap-3 md:gap-4 ml-auto">
               <button className="relative p-2 rounded-md hover:bg-muted transition-smooth">
-                <Icon name="Bell" size={20} />
+                <span className="text-xl">🔔</span>
                 <NotificationBadge count={3} className="absolute -top-1 -right-1" />
               </button>
               <UserProfileDropdown />
@@ -230,8 +229,8 @@ const UserManagementConsole = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
             <div className="bg-card border border-border rounded-lg p-4 md:p-6 shadow-elevation-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon name="Users" size={20} className="text-primary md:w-6 md:h-6" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex items-center justify-center text-lg md:text-xl">
+                  👥
                 </div>
                 <span className="text-xs md:text-sm text-success font-medium">+12%</span>
               </div>
@@ -241,8 +240,8 @@ const UserManagementConsole = () => {
 
             <div className="bg-card border border-border rounded-lg p-4 md:p-6 shadow-elevation-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                  <Icon name="UserCheck" size={20} className="text-success md:w-6 md:h-6" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-success/10 flex items-center justify-center text-lg md:text-xl">
+                  ✅
                 </div>
                 <span className="text-xs md:text-sm text-success font-medium">+5%</span>
               </div>
@@ -254,8 +253,8 @@ const UserManagementConsole = () => {
 
             <div className="bg-card border border-border rounded-lg p-4 md:p-6 shadow-elevation-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-warning/10 flex items-center justify-center">
-                  <Icon name="Shield" size={20} className="text-warning md:w-6 md:h-6" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-warning/10 flex items-center justify-center text-lg md:text-xl">
+                  🛡️
                 </div>
                 <span className="text-xs md:text-sm text-muted-foreground">4 roles</span>
               </div>
@@ -267,8 +266,8 @@ const UserManagementConsole = () => {
 
             <div className="bg-card border border-border rounded-lg p-4 md:p-6 shadow-elevation-1">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-accent/10 flex items-center justify-center">
-                  <Icon name="Clock" size={20} className="text-accent md:w-6 md:h-6" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-accent/10 flex items-center justify-center text-lg md:text-xl">
+                  🕐
                 </div>
                 <span className="text-xs md:text-sm text-muted-foreground">Last 24h</span>
               </div>

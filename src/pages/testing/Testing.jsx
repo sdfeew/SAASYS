@@ -3,7 +3,6 @@ import { Bug, Play, CheckCircle2, AlertCircle, Loader, BarChart3, Filter, Downlo
 import { useToast } from '../../contexts/ToastContext';
 import { PageContainer, PageCard, PageSection } from '../../components/layout/PageComponents';
 import AdminSidebar from '../../components/ui/AdminSidebar';
-import Icon from '../../components/AppIcon';
 
 const TestingPage = () => {
   const toast = useToast();
@@ -74,14 +73,6 @@ const TestingPage = () => {
       case 'passed': return 'text-success bg-success/10';
       case 'failed': return 'text-destructive bg-destructive/10';
       default: return 'text-muted-foreground bg-muted';
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'passed': return 'CheckCircle2';
-      case 'failed': return 'AlertCircle';
-      default: return 'Loader';
     }
   };
 
@@ -231,7 +222,13 @@ const TestingPage = () => {
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${getStatusColor(test.status)}`}>
-                            <Icon name={getStatusIcon(test.status)} size={16} />
+                            {test.status === 'passed' ? (
+                              <CheckCircle2 size={16} />
+                            ) : test.status === 'failed' ? (
+                              <AlertCircle size={16} />
+                            ) : (
+                              <Loader size={16} className="animate-spin" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-foreground truncate">{test.name}</p>
