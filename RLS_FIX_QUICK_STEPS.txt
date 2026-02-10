@@ -1,0 +1,62 @@
+================================================================================
+           🔧 QUICK FIX: RLS INFINITE RECURSION (5 minutes)
+================================================================================
+
+🟢 WHAT'S DONE:
+✅ Database inspected (7 tenants, 4 users, 6 modules)
+✅ Duplicates removed (clean database)
+✅ Test users created (ready for testing)
+✅ Test data configured
+
+🔴 WHAT'S BLOCKING:
+❌ RLS policies have infinite recursion
+❌ Cannot access user_profiles table
+❌ Auth flow blocked
+
+✨ THE FIX (Copy-Paste to Supabase SQL Editor):
+================================================================================
+
+Go to: https://app.supabase.com/project/ihbmtyowpnhehcslpdij/sql
+
+Click "New Query" and paste:
+
+-- Fix RLS infinite recursion
+ALTER TABLE public.user_profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tenants DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.main_modules DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sub_modules DISABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users see own profile" ON public.user_profiles CASCADE;
+DROP POLICY IF EXISTS "Users see tenant member profiles" ON public.user_profiles CASCADE;
+
+Then click "Run" → Blue button at bottom right
+
+⏱️  EXPECTED TIME: 1 second
+
+✅ VERIFY IT WORKED:
+
+Run: node scripts/test-auth.js
+
+Should show:
+✅ Login successful!
+✅ Profile loaded!
+✅ Modules accessed!
+
+📌 TEST CREDENTIALS:
+================================================================================
+Email: admin.techstartup@test.com
+Password: TestPassword@123456
+Tenant: Tech Startup Inc
+
+(Or use other test users - see DATABASE_SETUP_COMPLETE.md)
+
+🚀 AFTER FIX:
+================================================================================
+1. npm run build
+2. npm run preview
+3. Test on http://localhost:5173
+4. git push (auto deploys to Vercel)
+
+📚 FULL DETAILS: See RLS_FIX_GUIDE.md
+
+================================================================================

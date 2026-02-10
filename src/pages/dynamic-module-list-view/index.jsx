@@ -191,8 +191,8 @@ const DynamicModuleListView = () => {
       setColumns(moduleColumns);
       setVisibleColumns(moduleColumns?.map(col => col?.key));
 
-      // Load records for this module
-      const data = await recordService?.getAll(module?.id);
+      // Load records for this module (filtering by tenant for security)
+      const data = await recordService?.getAll(module?.id, tenantId);
       const formattedRecords = (data || [])?.map(record => ({
         id: record?.id,
         ...record?.data
@@ -213,7 +213,7 @@ const DynamicModuleListView = () => {
   const loadRecords = async () => {
     if (selectedModule) {
       try {
-        const data = await recordService?.getAll(selectedModule?.id);
+        const data = await recordService?.getAll(selectedModule?.id, tenantId);
         console.log('Loaded records from DB:', data);
         const formattedRecords = (data || [])?.map(record => ({
           id: record?.id,

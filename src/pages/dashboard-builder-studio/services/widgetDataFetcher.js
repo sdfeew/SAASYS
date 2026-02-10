@@ -22,8 +22,8 @@ export const widgetDataFetcher = {
         hasGroupBy: !!widget.dataSource.groupBy
       });
 
-      // Get raw records from module
-      const records = await recordService.getAll(widget.dataSource.moduleId);
+      // Get raw records from module (filtered by tenant)
+      const records = await recordService.getAll(widget.dataSource.moduleId, tenantId);
       
       console.log('[widgetDataFetcher] Raw records received:', records?.length || 0);
       
@@ -397,15 +397,15 @@ export const widgetDataFetcher = {
       
       if (error) {
         console.error('[getModuleFields] Query error:', error);
-        // Fallback: extract from first record
-        return this.getFieldsFromRecords(moduleId);
+        // Fallback: extract from first record (with tenant filtering)
+        return this.getFieldsFromRecords(moduleId, tenantId);
       }
       
       console.log('[getModuleFields] Retrieved fields:', fields?.length || 0);
       
       if (!fields || fields.length === 0) {
         console.log('[getModuleFields] No fields defined, extracting from records');
-        return this.getFieldsFromRecords(moduleId);
+        return this.getFieldsFromRecords(moduleId, tenantId);
       }
       
       // Format fields for UI - ensure label is a string, not an object
@@ -431,15 +431,15 @@ export const widgetDataFetcher = {
       });
     } catch (error) {
       console.error('[getModuleFields] Error getting module fields:', error);
-      // Fallback to extracting from records
-      return this.getFieldsFromRecords(moduleId);
+      // Fallback to extracting from records (with tenant filtering)
+      return this.getFieldsFromRecords(moduleId, tenantId);
     }
   },
 
-  async getFieldsFromRecords(moduleId) {
+  async getFieldsFromRecords(moduleId, tenantId) {
     try {
       console.log('[getFieldsFromRecords] Extracting fields from records for module:', moduleId);
-      const records = await recordService.getAll(moduleId);
+      const records = await recordService.getAll(moduleId, tenantId);
       
       if (!records || records.length === 0) {
         return [];
